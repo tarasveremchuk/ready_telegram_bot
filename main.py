@@ -1178,8 +1178,8 @@ def process_price(message,order_number, user_id):
 
     # Відправити повідомлення з кнопками
     markup = types.InlineKeyboardMarkup(row_width=2)
-    yes_button = types.InlineKeyboardButton('✅ Так', callback_data='yes')
-    no_button = types.InlineKeyboardButton('❌ Ні ', callback_data='no')
+    yes_button = types.InlineKeyboardButton('Так', callback_data='yes')
+    no_button = types.InlineKeyboardButton('Ні ', callback_data='no')
     markup.add(yes_button, no_button)
     bot.send_message(user_id, 'Погоджуєтесь з ціною?', reply_markup=markup)
 
