@@ -840,7 +840,7 @@ def my_items(message):
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('ttn_'))
 def handle_ttn_number(call):
-    if get_ttn_status(order_number) is None:
+    if get_ttn_status(current_order_number) is None:
         order_number = call.data.split('_')[1]
         bot.send_message(call.message.chat.id, 'Відправте номер накладної\n               ⬇️⬇️⬇️')
 
@@ -852,33 +852,37 @@ def handle_ttn_number(call):
 
 
 def save_ttn_number(message, order_number):
-    # Отримуємо введений користувачем номер ТТН
-    if get_ttn_status(order_number) is None:
+        # Отримуємо введений користувачем номер ТТН
+        if get_ttn_status(current_order_number) is None:
 
-        ttn_number = message.text
-        # Збереження номера ТТН у базу даних
-        conn = sqlite3.connect('photos.db')
-        cursor = conn.cursor()
-        cursor.execute('UPDATE photos SET nomer_ttn = ?, status = 5 WHERE order_number = ? AND user_id = ?',
-                       (ttn_number, order_number, message.from_user.id))
-        conn.commit()
-        conn.close()
+            ttn_number = message.text
+            # Збереження номера ТТН у базу даних
+            conn = sqlite3.connect('photos.db')
+            cursor = conn.cursor()
+            cursor.execute('UPDATE photos SET nomer_ttn = ?, status = 5 WHERE order_number = ? AND user_id = ?',
+                           (ttn_number, order_number, message.from_user.id))
+            conn.commit()
+            conn.close()
 
-        # Відправляємо відповідь користувачу
-        reply_text = f"Ти надіслав номер накладної ТТН: {ttn_number}. Номер ТТН збережено."
-        bot.send_message(message.chat.id, reply_text)
-        bot.send_message(-917631518,
-                         f"Користувач @{message.chat.username} відправив номер накладної {ttn_number}. Номер замовлення{order_number}")
-    else:
-        bot.send_message(message.chat.id,
-                         f"Номер ТТН уже було збережено")
+            # Відправляємо відповідь користувачу
+            reply_text = f"Ти надіслав номер накладної ТТН: {ttn_number}. Номер ТТН збережено."
+            bot.send_message(message.chat.id, reply_text)
+            bot.send_message(-917631518,
+                             f"Користувач @{message.chat.username} відправив номер накладної {ttn_number}. Номер замовлення: #{order_number}")
+        else:
+            bot.send_message(message.chat.id,
+                             f"Номер ТТН уже було збережено")
+
+
+
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('card_'))
 def handle_card_number(call):
-    if get_card_status(order_number) is None:
+
+    if get_card_status(current_order_number) is None:
         order_number = call.data.split('_')[1]
         bot.send_message(call.message.chat.id, 'Відправте номер вашої карти\n '
-                                               '                  ⬇️⬇️⬇️'
+                                               '                    ⬇️⬇️⬇️'
                          )
 
         # Реєструємо функцію, яка буде обробляти наступне повідомлення користувача
@@ -889,6 +893,7 @@ def handle_card_number(call):
 
 
 def save_card_number(message, order_number):
+
     # Отримуємо введений користувачем номер ТТН
     if get_card_status(order_number) is None:
 
@@ -1356,7 +1361,7 @@ def handle_choose_system_delivery(call):
                          f'‼️Як тільки ви відправите замовлення, *прикріпіть накладну*, натиснувши:\n"Мої замовлення" ➡️ "Відправити номер накладної". \nТам ж само ви можете прикріпити номер карти.',
                          parse_mode='Markdown')
         bot.send_message(group_id,
-                         f"@{message.chat.username} з ід `{message.chat.id}` обрав доставку наложним платежем\n Номер замовлення: {current_order_number}",parse_mode="MarkdownV2")
+                         f"@{message.chat.username} з ід `{message.chat.id}` обрав доставку через систему\n Номер замовлення: {current_order_number}",parse_mode="MarkdownV2")
     else:
         bot.send_message(owner_id, "Ти вже обрав спосіб доставки.")
 
