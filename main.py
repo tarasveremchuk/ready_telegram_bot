@@ -1153,12 +1153,12 @@ def process_order_number_input(message, user_id):
 # Функція для обробки ціни та збереження її до користувача
 
 def process_price(message,order_number, user_id):
-    conn2 = sqlite3.connect('photos.db')
-    cursor2 = conn2.cursor()
-    cursor2.execute('UPDATE photos SET price_status=None',
-                   (price, user_id, order_number))
-    conn2.commit()
-    conn2.close()
+    # conn2 = sqlite3.connect('photos.db')
+    # cursor2 = conn2.cursor()
+    # cursor2.execute('UPDATE photos SET price_status=None',
+    #                (user_id, order_number))
+    # conn2.commit()
+    # conn2.close()
 
 
     price = message.text
@@ -1178,10 +1178,10 @@ def process_price(message,order_number, user_id):
 
     # Відправити повідомлення з кнопками
     markup = types.InlineKeyboardMarkup(row_width=2)
-    yes_button = types.InlineKeyboardButton('Так', callback_data='yes')
-    no_button = types.InlineKeyboardButton('Ні ', callback_data='no')
+    yes_button = types.InlineKeyboardButton('✅ Так', callback_data='yes')
+    no_button = types.InlineKeyboardButton('❌ Ні', callback_data='no')
     markup.add(yes_button, no_button)
-    bot.send_message(user_id, 'Погоджуєтесь з ціною?', reply_markup=markup)
+    bot.send_message(user_id, 'Погоджуєшся з ціною?', reply_markup=markup)
 
 # def process_price(message, owner_id, order_number):
 #     price = message.text
