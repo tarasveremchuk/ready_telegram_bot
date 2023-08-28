@@ -974,14 +974,16 @@ def save_card_number(message, order_number):
 @bot.callback_query_handler(func=lambda call: call.data in ['yes', 'no'])
 def handle_callback_query(call):
     message = call.message
+    status1 = get_price_status(current_order_number)
+
     owner_id = message.chat.id
     group_id = '-917631518'  # Замініть на фактичний ID вашої групи
-
     if call.data == 'yes':
-        if get_price_status(current_order_number) is None:
+        if status1 == 15 or status1 is None :
+            send_delivery_options(message, owner_id, group_id)
             update_price_status(current_order_number, 14)  # Змінити статус на 4
 
-        else:
+        elif status1==14 :
             bot.send_message(message.chat.id,"Ти вже зробив вибір")
 
 
@@ -1145,6 +1147,7 @@ def process_order_number_input(message, user_id):
         owner_id = result[1]  # Припускаємо, що ідентифікатор власника замовлення є в другому стовпці
         bot.reply_to(message, 'Введіть ціну')
         bot.register_next_step_handler(message, lambda msg: process_price(msg, order_number, user_id))
+
     else:
         bot.reply_to(message, 'Номер замовлення не знайдено')
 
@@ -1159,7 +1162,7 @@ def process_price(message,order_number, user_id):
     #                (user_id, order_number))
     # conn2.commit()
     # conn2.close()
-
+    update_price_status(order_number, None)
 
     price = message.text
     bot.send_message(user_id, f"Запропонована нами ціна за замовлення #{order_number}: *{price}  грн*", parse_mode='Markdown')
