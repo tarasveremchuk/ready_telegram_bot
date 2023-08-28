@@ -840,12 +840,16 @@ def my_items(message):
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('ttn_'))
 def handle_ttn_number(call):
-    order_number = call.data.split('_')[1]
-    bot.send_message(call.message.chat.id, 'Відправте номер накладної\n                ⬇️⬇️⬇️')
+    if get_ttn_status(order_number) is None:
+        order_number = call.data.split('_')[1]
+        bot.send_message(call.message.chat.id, 'Відправте номер накладної\n               ⬇️⬇️⬇️')
+
+        # Реєструємо функцію, яка буде обробляти наступне повідомлення користувача
+        bot.register_next_step_handler(call.message, save_ttn_number, order_number)
+    else:
+        bot.send_message(call.message.chat.id, 'Ви уже відправляли номер ТТН!')
 
 
-    # Реєструємо функцію, яка буде обробляти наступне повідомлення користувача
-    bot.register_next_step_handler(call.message, save_ttn_number, order_number)
 
 def save_ttn_number(message, order_number):
     # Отримуємо введений користувачем номер ТТН
@@ -871,13 +875,18 @@ def save_ttn_number(message, order_number):
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('card_'))
 def handle_card_number(call):
-    order_number = call.data.split('_')[1]
-    bot.send_message(call.message.chat.id, 'Відправте номер вашої карти\n '
-                     '                  ⬇️⬇️⬇️'
-                                           )
+    if get_card_status(order_number) is None:
+        order_number = call.data.split('_')[1]
+        bot.send_message(call.message.chat.id, 'Відправте номер вашої карти\n '
+                                               '                  ⬇️⬇️⬇️'
+                         )
 
-    # Реєструємо функцію, яка буде обробляти наступне повідомлення користувача
-    bot.register_next_step_handler(call.message, save_card_number, order_number)
+        # Реєструємо функцію, яка буде обробляти наступне повідомлення користувача
+        bot.register_next_step_handler(call.message, save_card_number, order_number)
+    else:
+        bot.send_message(message.chat.id,
+                         f"Ви уже зберігали номер карти!")
+
 
 def save_card_number(message, order_number):
     # Отримуємо введений користувачем номер ТТН
