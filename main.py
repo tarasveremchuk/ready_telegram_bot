@@ -758,9 +758,9 @@ def my_items(message):
                 status = status_record[0]
                 price = status_record[1]
                 photo_data = base64.b64decode(status_record[2])
-                ttn_number = status_record[3]
-                delivery_field=status_record[4]
-                card_number=status_record[5]
+                ttn_number = status_record[3] if status_record[3] is not None else 'Ще немає'
+                delivery_field=status_record[4] if status_record[4] is not None else 'Ще немає'
+                card_number=status_record[5] if status_record[5] is not None else 'Ще немає'
 
                 if status == 1:
                     caption = f"➡️ *Номер замовлення:* {order_number}\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ Статус: Пропозицію була подана на розгляд 😼\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ Ціна запропонована нами: {price} грн\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ Номер накладної: {ttn_number}"
@@ -1020,7 +1020,7 @@ def handle_callback_query(call):
             propose_price(message, owner_id, group_id)
         else:
             bot.send_message(message.chat.id,"Ти вже зробив вибір")
-
+а
 
 
 
@@ -1030,7 +1030,7 @@ def send_delivery_options(message, owner_id, group_id):
     delivery_option1 = types.InlineKeyboardButton('Доставка #1', callback_data='delivery_option1')
     delivery_option2 = types.InlineKeyboardButton('Доставка #2', callback_data='delivery_option2')
     markup.add(delivery_option1, delivery_option2)
-    bot.send_message(owner_id, 'Оберіть спосіб доставки:', reply_markup=markup)
+    bot.send_message(owner_id, 'Обери спосіб доставки:', reply_markup=markup)
 
 
 def propose_price(message, owner_id, group_id):
@@ -1189,7 +1189,7 @@ def process_price(message,order_number, user_id):
     update_price_status(order_number, None)
 
     price = message.text
-    bot.send_message(user_id, f"‼️Запропонована нами ціна за замовлення #{order_number}: *{price}  грн*", parse_mode='Markdown')
+    bot.send_message(user_id, f"‼️*Запропонована нами ціна* за замовлення #{order_number}: *{price}  грн*", parse_mode='Markdown')
 
     # Здійснюємо дії з ціною, наприклад, зберігаємо її в базі даних
 
@@ -1256,7 +1256,7 @@ def send_delivery_options(message, owner_id, group_id):
         delivery1_button = types.InlineKeyboardButton('🚚 Наложкою', callback_data='delivery1')
         delivery2_button = types.InlineKeyboardButton('💳 Через систему', callback_data='delivery2')
         markup.add(delivery1_button, delivery2_button)
-        bot.send_message(owner_id, 'Оберіть спосіб доставки:', reply_markup=markup)
+        bot.send_message(owner_id, 'Обери спосіб доставки:', reply_markup=markup)
     else:
         bot.send_message(group_id, f"@{message.chat.username} не погодився з ціною менеджера. Зв'яжіться з ним")
 
