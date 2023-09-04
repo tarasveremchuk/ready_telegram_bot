@@ -1020,7 +1020,7 @@ def handle_callback_query(call):
             propose_price(message, owner_id, group_id)
         else:
             bot.send_message(message.chat.id,"Ти вже зробив вибір")
-а
+
 
 
 
