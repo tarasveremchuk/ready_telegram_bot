@@ -1266,7 +1266,7 @@ def handle_delivery_selection(call):
             choose_cod_button = types.InlineKeyboardButton('✅ Обрати доставку наложним платежем',
                                                            callback_data='choose_cod')
             markup.add(choose_cod_button)
-            bot.send_message(owner_id, delivery1_message, reply_markup=markup)
+            bot.send_message(owner_id, delivery1_message, reply_markup=markup, parse_mode='Markdown')
 
         else:
             bot.send_message(owner_id, "Ти вже обрав спосіб доставки.")
