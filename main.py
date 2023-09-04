@@ -756,7 +756,7 @@ def my_items(message):
 
             if status_record:
                 status = status_record[0]
-                price = status_record[1]
+                price = status_record[1] if status_record[1] is not None else 'Ще немає'
                 photo_data = base64.b64decode(status_record[2])
                 ttn_number = status_record[3] if status_record[3] is not None else 'Ще немає'
                 delivery_field=status_record[4] if status_record[4] is not None else 'Ще немає'
