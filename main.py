@@ -1087,7 +1087,7 @@ def process_order_number_cancel(message):
 
     if result2:
         bot.reply_to(message, 'Введіть номер замовлення:')
-        bot.register_next_step_handler(message, process_order_number_cancel, user_id)
+        bot.register_next_step_handler(message, process_order_number_cancel2, user_id)
     else:
         bot.reply_to(message, 'Номер користувача не знайдено')
 
@@ -1180,7 +1180,7 @@ def process_order_number_input(message, user_id):
         bot.reply_to(message, 'Номер замовлення не знайдено')
 
     conn.close()
-def process_order_number_cancel(message, user_id):
+def process_order_number_cancel2(message, user_id):
     order_number = message.text
 
     # Перевірка наявності номера замовлення у базі даних
