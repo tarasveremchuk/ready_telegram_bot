@@ -84,11 +84,13 @@ def info(message):
         OrestLoh(message)
     elif message.text == "Відправити ціну":
         handle_send_price(message)
+    elif message.text=="Відмовити замовлення":
+        handle_cancel_order(message)
     elif message.text=="Пошук замовлень":
         handle_find_order(message)
     elif message.text=="Відправити розсилку":
         send_broadcast_message(message)
-    elif message.text == "✅ Речі які ми купуємо ✅":
+    elif message.text == "☑️ Речі які ми купуємо ☑️":
         handle_buying_items(message)
     elif message.text == "✅ Я відправив усі фото":
          check_and_update_status(message)
@@ -287,16 +289,17 @@ def adminPanel(message):
         button1 = types.KeyboardButton('Відправити ціну')
         button2 = types.KeyboardButton('Відправити розсилку')
         button3 = types.KeyboardButton('Пошук замовлень')
+        button5 = types.KeyboardButton('Відмовити замовлення')
         button4 = types.KeyboardButton('↩️ Назад до меню')
         markup.row(button1, button2)
-        markup.row(button3)
+        markup.row(button3,button5)
         markup.row(button4)
         bot.send_message(message.chat.id, 'Ти перейшов у розділ Адмін панель', reply_markup=markup)
 
 
 def goodsChapter(message):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    button1 = types.KeyboardButton('✅ Речі які ми купуємо ✅')
+    button1 = types.KeyboardButton('☑️ Речі які ми купуємо ☑️')
     button2 = types.KeyboardButton('📷 Відправити фото 📸')
     button3 = types.KeyboardButton('❓Як ми оцінюємо товар❓')
     button4 = types.KeyboardButton('↩️ Назад до меню')
@@ -994,7 +997,7 @@ def handle_callback_query(call):
     elif call.data == 'no':
         if get_price_status(current_order_number) is None:
             bot.send_message(message.chat.id,
-                             "Ми поважаємо твоє рішення. \n\n📍Один з працівників ознайомиться з твоїм замовленням, та *можливо буде запропонована інша ціна*.")
+                             "Ми поважаємо твоє рішення. \n\n📍Один з працівників ознайомиться з твоїм замовленням, та *можливо буде запропонована інша ціна*.",parse_mode='Markdown')
             update_price_status(current_order_number, 14)  # Змінити статус на 3
 
             propose_price(message, owner_id, group_id)
@@ -1032,6 +1035,13 @@ def handle_send_price(message):
 
 
 
+@bot.message_handler(commands=['send_price'])
+def handle_cancel_order(message):
+    if message.from_user.id == 788388571 or message.from_user.id == 5792353056 or message.from_user.id ==5792353056:
+        bot.reply_to(message, 'Введіть id користувача')
+        bot.register_next_step_handler(message, process_order_number)
+    else:
+        bot.reply_to(message, 'У вас немає доступу до цієї команди.')
 def send_broadcast_message(message):
     if message.from_user.id == 788388571 or message.from_user.id == 5792353056 or message.from_user.id ==5792353056:
         bot.send_message(message.chat.id, "Введи текст розсилки: ")
@@ -1063,7 +1073,7 @@ def process_order_number(message):
 
     if result2:
         bot.reply_to(message, 'Введіть номер замовлення:')
-        bot.register_next_step_handler(message, process_order_number_input, user_id)
+        bot.register_next_step_handler(message, process_order_number_cancel, user_id)
     else:
         bot.reply_to(message, 'Номер користувача не знайдено')
 
@@ -1156,7 +1166,24 @@ def process_order_number_input(message, user_id):
         bot.reply_to(message, 'Номер замовлення не знайдено')
 
     conn.close()
+def process_order_number_cancel(message, user_id):
+    order_number = message.text
 
+    # Перевірка наявності номера замовлення у базі даних
+    conn = sqlite3.connect('photos.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM photos WHERE order_number = ?', (order_number,))
+    result = cursor.fetchone()
+
+    if result:
+        bot.send_message(user_id, f"‼️*Ми відмовляємося від вашого замовлення #{order_number}: *",
+                         parse_mode='Markdown')
+
+
+    else:
+        bot.reply_to(message, 'Номер замовлення не знайдено')
+
+    conn.close()
 # Функція для обробки ціни та збереження її до користувача
 
 def process_price(message,order_number, user_id):
