@@ -1039,7 +1039,7 @@ def handle_send_price(message):
 def handle_cancel_order(message):
     if message.from_user.id == 788388571 or message.from_user.id == 5792353056 or message.from_user.id ==5792353056:
         bot.reply_to(message, 'Введіть id користувача')
-        bot.register_next_step_handler(message, process_order_number)
+        bot.register_next_step_handler(message, process_order_number_cancel)
     else:
         bot.reply_to(message, 'У вас немає доступу до цієї команди.')
 def send_broadcast_message(message):
@@ -1063,6 +1063,20 @@ def send_broadcast_message2(message):
     for user_id in user_ids:
         bot.send_message(chat_id=user_id, text=message_text)
 def process_order_number(message):
+    user_id = message.text  # Отримуємо ідентифікатор користувача з повідомлення
+
+    conn2 = sqlite3.connect('photos.db')
+    cursor2 = conn2.cursor()
+    cursor2.execute('SELECT * FROM photos WHERE user_id = ?', (user_id,))
+    result2 = cursor2.fetchone()
+    conn2.close()
+
+    if result2:
+        bot.reply_to(message, 'Введіть номер замовлення:')
+        bot.register_next_step_handler(message, process_order_number_input, user_id)
+    else:
+        bot.reply_to(message, 'Номер користувача не знайдено')
+def process_order_number_cancel(message):
     user_id = message.text  # Отримуємо ідентифікатор користувача з повідомлення
 
     conn2 = sqlite3.connect('photos.db')
@@ -1176,7 +1190,7 @@ def process_order_number_cancel(message, user_id):
     result = cursor.fetchone()
 
     if result:
-        bot.send_message(user_id, f"‼️*Ми відмовляємося від вашого замовлення #{order_number}: *",
+        bot.send_message(user_id, f"‼️*Ми відмовляємося від вашого замовлення #{order_number} *",
                          parse_mode='Markdown')
 
 
