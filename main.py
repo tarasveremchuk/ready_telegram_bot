@@ -668,22 +668,22 @@ def my_items(message):
                     bot.send_photo(chat_id=message.chat.id, photo=io.BytesIO(photo_data), caption=caption,
                                    reply_markup=markup, parse_mode='Markdown')
 
-                elif status==5:
-                    # Створення першого об'єкту markup і додавання до нього першої кнопки
-                    markup = types.InlineKeyboardMarkup()
-                    ttn_button = types.InlineKeyboardButton("Відправте номер накладної", callback_data=f"ttn_{order_number}")
-                    markup.add(ttn_button)
-
-                    # Створення другого об'єкту markup і додавання до нього другої кнопки
-                    ttn_button2 = types.InlineKeyboardButton('Відправте номер вашої карти',callback_data=f"card_{order_number}")
-                    markup.add(ttn_button2)
-
-                    # Ваш підготовлений caption
-                    caption = f"➡️ *Номер замовлення:* {order_number}\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Назва товару:* {name_order}\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Статус:* Відправлення в дорозі 📦\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Запропонована ціна:* {price} грн\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Номер накладної:* {ttn_number}\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Номер карти:* {card_number}"
-
-                    # Відправка повідомлення з фото, текстом та об'єктом markup
-                    bot.send_photo(chat_id=message.chat.id, photo=io.BytesIO(photo_data), caption=caption,
-                                   reply_markup=markup, parse_mode='Markdown')
+                # elif status==5:
+                #     # Створення першого об'єкту markup і додавання до нього першої кнопки
+                #     markup = types.InlineKeyboardMarkup()
+                #     ttn_button = types.InlineKeyboardButton("Відправте номер накладної", callback_data=f"ttn_{order_number}")
+                #     markup.add(ttn_button)
+                #
+                #     # Створення другого об'єкту markup і додавання до нього другої кнопки
+                #     ttn_button2 = types.InlineKeyboardButton('Відправте номер вашої карти',callback_data=f"card_{order_number}")
+                #     markup.add(ttn_button2)
+                #
+                #     # Ваш підготовлений caption
+                #     caption = f"➡️ *Номер замовлення:* {order_number}\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Назва товару:* {name_order}\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Статус:* Відправлення в дорозі 📦\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Запропонована ціна:* {price} грн\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Номер накладної:* {ttn_number}\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Номер карти:* {card_number}"
+                #
+                #     # Відправка повідомлення з фото, текстом та об'єктом markup
+                #     bot.send_photo(chat_id=message.chat.id, photo=io.BytesIO(photo_data), caption=caption,
+                #                    reply_markup=markup, parse_mode='Markdown')
 
                 elif status==6:
                     # Створення першого об'єкту markup і додавання до нього першої кнопки
