@@ -306,7 +306,7 @@ def adminPanel(message):
 
         markup.row(button1, button2)
         markup.row(button3,button5)
-        markup.row(button4,button7)
+        markup.row(button4)
         bot.send_message(message.chat.id, 'Ти перейшов у розділ Адмін панель', reply_markup=markup)
 
 
