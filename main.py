@@ -117,8 +117,8 @@ def info(message):
         last_order_number = None
         sentPhotoChapter(message)
 
-        @bot.message_handler(content_types='photo')
-        def get_photo(message):
+        @bot.message_handler(content_types=['photo'])
+        def handle_photo(message):
             conn = sqlite3.connect('photos.db')
             cursor = conn.cursor()
 
@@ -172,14 +172,12 @@ def info(message):
                 cursor.execute(
                     'INSERT INTO photos (user_id, file, order_number, price, status, delivery, nomer_ttn,price_status) '
                     'VALUES (?, ?, ?, ?, ?, ?,  ?,?)',
-                    (user_id, encoded_photo, last_order_number, None, status, None, None,None))
-                conn.commit()
+                    (user_id, encoded_photo, last_order_number, None, status, None, None, None))
                 conn.commit()
 
                 order_message = f"Користувач @{message.from_user.username} з ід `{message.chat.id}` хоче продати річ\n" \
                                 f"Номер замовлення: {last_order_number}"
-                bot.send_message(chat_id='-917631518', text=order_message,parse_mode='MarkdownV2')
-
+                bot.send_message(chat_id='-917631518', text=order_message, parse_mode='MarkdownV2')
 
                 # Відправлення фотографії до групи
                 bot.send_photo(chat_id='-917631518', photo=photo.file_id)
@@ -187,6 +185,8 @@ def info(message):
             cursor.close()
             conn.close()
 
+        # Запуск бота
+        bot.polling()
 
 
 
