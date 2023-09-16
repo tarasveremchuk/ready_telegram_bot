@@ -173,11 +173,12 @@ def info(message):
                     'INSERT INTO photos (user_id, file, order_number, price, status, delivery, nomer_ttn,price_status) '
                     'VALUES (?, ?, ?, ?, ?, ?,  ?,?)',
                     (user_id, encoded_photo, last_order_number, None, status, None, None, None))
-                conn.commit()
 
-                order_message = f"Користувач @{message.from_user.username} з ід `{message.chat.id}` хоче продати річ\n" \
-                                f"Номер замовлення: {last_order_number}"
-                bot.send_message(chat_id='-917631518', text=order_message, parse_mode='MarkdownV2')
+                conn.commit()
+                order_message = f"Користувач @{message.from_user.username} з ід {message.chat.id} хоче продати річ\n" \
+                               f"Номер замовлення: {last_order_number}"
+                bot.send_message(chat_id='-917631518', text=order_message)
+
 
                 # Відправлення фотографії до групи
                 bot.send_photo(chat_id='-917631518', photo=photo.file_id)
