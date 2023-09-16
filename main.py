@@ -302,9 +302,11 @@ def adminPanel(message):
         button3 = types.KeyboardButton('Пошук замовлень')
         button5 = types.KeyboardButton('Відмовити замовлення')
         button4 = types.KeyboardButton('↩️ Назад до меню')
+        # button7 = types.KeyboardButton('Скачати базу')
+
         markup.row(button1, button2)
         markup.row(button3,button5)
-        markup.row(button4)
+        markup.row(button4,button7)
         bot.send_message(message.chat.id, 'Ти перейшов у розділ Адмін панель', reply_markup=markup)
 
 
@@ -814,8 +816,8 @@ def save_card_number(message, order_number):
         reply_text = f"Ти надіслав номер своєї карти: {card_number}. Номер карти збережено."
         bot.send_message(message.chat.id, reply_text)
         bot.send_message(-917631518,
-                         f"Користувач @{message.chat.username} з ід `{message.chat.id}` відправив номер своєї карти: `{card_number}`\nНомер замовлення: {order_number}",
-                         parse_mode="MarkdownV2")
+                         f"Користувач @{message.chat.username} з ід {message.chat.id} відправив номер своєї карти: {card_number}\nНомер замовлення: {order_number}"
+                         )
     else:
         bot.send_message(message.chat.id,
                          f"Номер карти уже було збережено")
@@ -876,7 +878,28 @@ def handle_send_price(message):
         bot.reply_to(message, 'У вас немає доступу до цієї команди.')
 
 
+def send_db_command(update, context):
+    send_database(update.message)
+def send_database(message):
+    if message.from_user.id == 788388571 or message.from_user.id == 5792353056 or message.from_user.id == 5792353056:
+        chat_id = message.chat.id
+        bot = message.bot
 
+        # Шлях до вашої бази даних SQLite
+        db_path = 'photos.db'
+
+        # Перевірка, чи існує файл бази даних
+        if not os.path.exists(db_path):
+            bot.send_message(chat_id, 'Файл бази даних не знайдено.')
+            return
+
+        # Відправка файлу бази даних
+        with open(db_path, 'rb') as db_file:
+            bot.send_document(chat_id=chat_id, document=InputFile(db_file))
+
+        bot.send_message(chat_id, 'База даних відправлена.')
+    else:
+        bot.reply_to(message, 'У вас немає доступу до цієї команди.')
 @bot.message_handler(commands=['send_price'])
 def handle_cancel_order(message):
     if message.from_user.id == 788388571 or message.from_user.id == 5792353056 or message.from_user.id ==5792353056:
@@ -1170,7 +1193,7 @@ def handle_choose_cod(call):
 "Мої замовлення" ➡️ "Прикріпити номер накладної".''',
                          parse_mode='Markdown')
         bot.send_message(group_id,
-                         f"@{message.chat.username} з ід `{message.chat.id}` обрав доставку наложним платежем\n Номер замовлення: {current_order_number}",parse_mode="MarkdownV2")
+                         f"@{message.chat.username} з ід {message.chat.id} обрав доставку наложним платежем\n Номер замовлення: {current_order_number}")
     else:
         bot.send_message(owner_id, "Ти вже обрав спосіб доставки.")
 
@@ -1195,11 +1218,28 @@ def handle_choose_system_delivery(call):
                          f'‼️Як тільки ви відправите замовлення, *прикріпіть накладну*, натиснувши:\n"Мої замовлення" ➡️ "Відправити номер накладної". \nТам ж само ви можете прикріпити номер карти.',
                          parse_mode='Markdown')
         bot.send_message(group_id,
-                         f"@{message.chat.username} з ід `{message.chat.id}` обрав доставку через систему\n Номер замовлення: {current_order_number}",parse_mode="MarkdownV2")
+                         f"@{message.chat.username} з ід {message.chat.id} обрав доставку через систему\n Номер замовлення: {current_order_number}")
     else:
         bot.send_message(owner_id, "Ти вже обрав спосіб доставки.")
 
 
+def send_database(update, context):
+    chat_id = update.effective_chat.id
+    bot = context.bot
+
+    # Шлях до вашої бази даних SQLite
+    db_path = 'photos.db'
+
+    # Перевірка, чи існує файл бази даних
+    if not os.path.exists(db_path):
+        update.message.reply_text('Файл бази даних не знайдено.')
+        return
+
+    # Відправка файлу бази даних
+    with open(db_path, 'rb') as db_file:
+        bot.send_document(chat_id=chat_id, document=InputFile(db_file))
+
+    update.message.reply_text('База даних відправлена.')
 def get_delivery_status(order_number):
     conn = sqlite3.connect('photos.db')
     cursor = conn.cursor()
