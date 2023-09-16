@@ -121,7 +121,6 @@ def info(message):
         def handle_photo(message):
             conn = sqlite3.connect('photos.db')
             cursor = conn.cursor()
-
             # Створення таблиці для збереження фотографій
             cursor.execute('''
                            CREATE TABLE IF NOT EXISTS photos (
@@ -175,12 +174,15 @@ def info(message):
                     (user_id, encoded_photo, last_order_number, None, status, None, None, None))
 
                 conn.commit()
-                order_message = f"Користувач @{message.from_user.username} з ід {message.chat.id} хоче продати річ\n" \
-                               f"Номер замовлення: {last_order_number}"
+
+                order_message = f"Користувач @{message.from_user.username}  хоче продати річ\nНомер замовлення: {last_order_number}\n З ІД:"
                 bot.send_message(chat_id='-917631518', text=order_message)
 
+                order_message2 = f"{message.chat.id}"
+                bot.send_message(chat_id='-917631518', text=order_message2)
 
-                # Відправлення фотографії до групи
+
+# Відправлення фотографії до групи
                 bot.send_photo(chat_id='-917631518', photo=photo.file_id)
 
             cursor.close()
