@@ -185,10 +185,6 @@ def info(message):
             cursor.close()
             conn.close()
 
-        # Запуск бота
-        bot.polling()
-
-
 
 
 
