@@ -624,6 +624,7 @@ def my_items(message):
             cursor.execute('SELECT status, price, file, nomer_ttn,delivery, nomer_card,name_order FROM photos WHERE user_id = ? AND order_number = ?',
                            (user_id, order_number))
             status_record = cursor.fetchone()
+            name_order = status_record[6] if status_record[6] is not None else 'Ще немає'
 
             if status_record:
                 status = status_record[0]
@@ -649,7 +650,7 @@ def my_items(message):
 
                     # Створення кнопки "Відправити номер ТТН"
                     markup = types.InlineKeyboardMarkup()
-                    ttn_button = types.InlineKeyboardButton("Відправте номер накладної", callback_data=f"ttn_{order_number}")
+                    ttn_button = types.InlineKeyboardButton("Прикріпити номер накладної", callback_data=f"ttn_{order_number}")
                     markup.add(ttn_button)
 
                     # Відправка повідомлення з фото, текстом та кнопкою
@@ -658,7 +659,7 @@ def my_items(message):
                 elif status==4 and delivery_field=='Доставка через систему':
                     # Створення першого об'єкту markup і додавання до нього першої кнопки
                     markup = types.InlineKeyboardMarkup()
-                    ttn_button = types.InlineKeyboardButton("Відправте номер накладної", callback_data=f"ttn_{order_number}")
+                    ttn_button = types.InlineKeyboardButton("Прикріпити номер накладної", callback_data=f"ttn_{order_number}")
                     markup.add(ttn_button)
 
                     # Створення другого об'єкту markup і додавання до нього другої кнопки
@@ -692,7 +693,7 @@ def my_items(message):
                 elif status==6:
                     # Створення першого об'єкту markup і додавання до нього першої кнопки
                     markup = types.InlineKeyboardMarkup()
-                    ttn_button = types.InlineKeyboardButton("Відправте номер накладної", callback_data=f"ttn_{order_number}")
+                    ttn_button = types.InlineKeyboardButton("Прикріпити номер накладної", callback_data=f"ttn_{order_number}")
                     markup.add(ttn_button)
 
                     # Створення другого об'єкту markup і додавання до нього другої кнопки
@@ -747,7 +748,7 @@ def my_items(message):
 def handle_ttn_number(call):
     if get_ttn_status(current_order_number) is None:
         order_number = call.data.split('_')[1]
-        bot.send_message(call.message.chat.id, 'Відправте номер накладної\n               ⬇️⬇️⬇️')
+        bot.send_message(call.message.chat.id, 'Прикріпити номер накладної\n               ⬇️⬇️⬇️')
 
         # Реєструємо функцію, яка буде обробляти наступне повідомлення користувача
         bot.register_next_step_handler(call.message, save_ttn_number, order_number)
@@ -1049,12 +1050,15 @@ def process_order_number_cancel2(message, user_id):
     order_number = message.text
 
     # Перевірка наявності номера замовлення у базі даних
-    conn = sqlite3.connect('photos.db')
-    cursor = conn.cursor()
-    cursor.execute('SELECT * FROM photos WHERE order_number = ?', (order_number,))
-    result = cursor.fetchone()
+    conn2 = sqlite3.connect('photos.db')
+    cursor2 = conn2.cursor()
+    cursor2.execute(
+        'SELECT status, price, file, nomer_ttn,delivery, nomer_card,name_order FROM photos WHERE user_id = ? AND order_number = ?',
+        (user_id, order_number))
+    status_record = cursor2.fetchone()
+    name_order = status_record[6]
 
-    if result:
+    if status_record:
         bot.send_message(user_id, f"‼️*На жаль ми не можемо тобі нічого запропонувати за замовлення  #{order_number}: {name_order}*.\n\nОднією з причин відмови могли стати наступні фактори:\n1️⃣ Не автентичність одягу.\n2️⃣ Стан або розмір.\n3️⃣ Відсутність потреби.",
                          parse_mode='Markdown')
 
@@ -1062,15 +1066,20 @@ def process_order_number_cancel2(message, user_id):
     else:
         bot.reply_to(message, 'Номер замовлення не знайдено')
 
-    conn.close()
 # Функція для обробки ціни та збереження її до користувача
 
 def process_price(message,order_number, user_id):
-
+    conn2 = sqlite3.connect('photos.db')
+    cursor2 = conn2.cursor()
+    cursor2.execute(
+        'SELECT status, price, file, nomer_ttn,delivery, nomer_card,name_order FROM photos WHERE user_id = ? AND order_number = ?',
+        (user_id, order_number))
+    status_record = cursor2.fetchone()
+    name_order = status_record[6]
     update_price_status(order_number, None)
 
     price = message.text
-    bot.send_message(user_id, f"‼️*Запропонована нами ціна* за замовлення #{order_number}: *{price}  грн*", parse_mode='Markdown')
+    bot.send_message(user_id, f"‼️*Запропонована нами ціна* за замовлення #{order_number} '{name_order}': *{price}  грн*", parse_mode='Markdown')
 
     # Здійснюємо дії з ціною, наприклад, зберігаємо її в базі даних
 
