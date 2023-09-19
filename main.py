@@ -86,6 +86,9 @@ def info(message):
         handle_send_price(message)
     elif message.text=="Відмовити замовлення":
         handle_cancel_order(message)
+
+    elif message.text=="Неправильний ТТН":
+        handle_bad_ttn(message)
     elif message.text=="Пошук замовлень":
         handle_find_order(message)
     elif message.text=="Відправити розсилку":
@@ -219,15 +222,11 @@ def info(message):
 
 
 def check_and_update_status(message):
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    button2 = types.KeyboardButton('↩️ Назад до меню')
-    markup.row(button2)
     user_id = message.from_user.id
 
     conn = sqlite3.connect('photos.db')
     cursor = conn.cursor()
 
-    # Вибірка останнього замовлення користувача
     cursor.execute('''
             SELECT status, order_number
             FROM photos
@@ -236,38 +235,33 @@ def check_and_update_status(message):
             LIMIT 1
         ''', (user_id,))
 
-    # Отримання результату запиту
     row = cursor.fetchone()
 
     if row is not None:
         status, order_number = row
         if status == 8:
             cursor.execute('UPDATE photos SET status = 9 WHERE order_number = ? AND user_id = ?',
-                           ( order_number, message.from_user.id))
+                           (order_number, message.from_user.id))
             conn.commit()
-
-            conn.commit()  # Застосування змін до бази даних
-
-
 
             bot.send_message(message.chat.id, '✅ Твої фото були успішно завантажені 😌\n\n'
                                               '📍Щоб переглянути статус вашого товару перейди до розділу "Мої замовлення".\n\n'
-                                              '📍Один з наших працівників розгляне твою пропозицію та запропонує тобі найкращу ціну, роблячи це максимально швидко 🚀', reply_markup=markup)
+                                              '📍Один з наших працівників розгляне твою пропозицію та запропонує тобі найкращу ціну, роблячи це максимально швидко 🚀')
+            hide_markup = types.ReplyKeyboardRemove()
 
             bot.send_message(message.chat.id,'''*‼️Придумай назву для замовлення.*
 
 Наприклад:
-Футболка червона Nike vintage L.''', parse_mode='Markdown'  )
+Футболка червона Nike vintage L.''', parse_mode='Markdown', reply_markup=hide_markup )
             bot.register_next_step_handler(message, process_name_order,order_number)
-
-
-
-
 
         else:
             bot.send_message(message.chat.id, 'УПС.... Ти не завантажив фотографій!')
     else:
         bot.send_message(message.chat.id, 'УПС.... Ти не завантажив фотографій!')
+
+    # Приховуємо панель з кнопками
+
 
     conn.close()
 def check_photos(message):
@@ -301,12 +295,14 @@ def adminPanel(message):
         button2 = types.KeyboardButton('Відправити розсилку')
         button3 = types.KeyboardButton('Пошук замовлень')
         button5 = types.KeyboardButton('Відмовити замовлення')
+        button6 = types.KeyboardButton('Неправильний ТТН')
+
         button4 = types.KeyboardButton('↩️ Назад до меню')
         # button7 = types.KeyboardButton('Скачати базу')
 
         markup.row(button1, button2)
         markup.row(button3,button5)
-        markup.row(button4)
+        markup.row(button4,button6)
         bot.send_message(message.chat.id, 'Ти перейшов у розділ Адмін панель', reply_markup=markup)
 
 
@@ -365,6 +361,7 @@ def process_name_order(message, order_number):
     button2 = types.KeyboardButton('↩️ Назад до меню')
     markup.row(button2)
     name_order = message.text
+
     # Збереження номера ТТН у базу даних
     conn = sqlite3.connect('photos.db')
     cursor = conn.cursor()
@@ -375,7 +372,8 @@ def process_name_order(message, order_number):
 
     # Відправляємо відповідь користувачу
     reply_text = f"Ти надіслав назву до замовлення #{order_number}: {name_order}!"
-    bot.send_message(message.chat.id, reply_text)
+    bot.send_message(message.chat.id, reply_text, reply_markup=markup)  # Відправка разом з кнопкою
+
 
 
 def check_photos_sent(user_id):
@@ -908,6 +906,13 @@ def handle_cancel_order(message):
         bot.register_next_step_handler(message, process_order_number_cancel)
     else:
         bot.reply_to(message, 'У вас немає доступу до цієї команди.')
+@bot.message_handler(commands=['send_price'])
+def handle_bad_ttn(message):
+    if message.from_user.id == 788388571 or message.from_user.id == 5792353056 or message.from_user.id ==5792353056:
+        bot.reply_to(message, 'Введіть id користувача')
+        bot.register_next_step_handler(message, process_order_ttn_bad)
+    else:
+        bot.reply_to(message, 'У вас немає доступу до цієї команди.')
 def send_broadcast_message(message):
     if message.from_user.id == 788388571 or message.from_user.id == 5792353056 or message.from_user.id ==5792353056:
         bot.send_message(message.chat.id, "Введи текст розсилки: ")
@@ -957,6 +962,20 @@ def process_order_number_cancel(message):
     else:
         bot.reply_to(message, 'Номер користувача не знайдено')
 
+def process_order_ttn_bad(message):
+    user_id = message.text  # Отримуємо ідентифікатор користувача з повідомлення
+
+    conn2 = sqlite3.connect('photos.db')
+    cursor2 = conn2.cursor()
+    cursor2.execute('SELECT * FROM photos WHERE user_id = ?', (user_id,))
+    result2 = cursor2.fetchone()
+    conn2.close()
+
+    if result2:
+        bot.reply_to(message, 'Введіть номер замовлення:')
+        bot.register_next_step_handler(message, process_order_ttn_bad2, user_id)
+    else:
+        bot.reply_to(message, 'Номер користувача не знайдено')
 # Функція для обробки введеного номера замовлення
 def handle_find_order(message):
     if message.from_user.id == 788388571 or message.from_user.id==5792353056:
@@ -1065,7 +1084,26 @@ def process_order_number_cancel2(message, user_id):
 
     else:
         bot.reply_to(message, 'Номер замовлення не знайдено')
+def process_order_ttn_bad2(message, user_id):
+    order_number = message.text
 
+    # Перевірка наявності номера замовлення у базі даних
+    conn2 = sqlite3.connect('photos.db')
+    cursor2 = conn2.cursor()
+    cursor2.execute(
+        'SELECT status, price, file, nomer_ttn,delivery, nomer_card,name_order FROM photos WHERE user_id = ? AND order_number = ?',
+        (user_id, order_number))
+    status_record = cursor2.fetchone()
+    name_order = status_record[6]
+    nomer_ttn = status_record[3]
+
+    if status_record:
+        bot.send_message(user_id, f"‼️*На жаль ви надали нам неправильний номер ТТН [{nomer_ttn}]  до замовлення #{order_number}: {name_order}*.\n\n Зміни його, у розділі Мої речі, натиснувши на кнопку Змінити номер ТТН",
+                         parse_mode='Markdown')
+
+
+    else:
+        bot.reply_to(message, 'Номер замовлення не знайдено')
 # Функція для обробки ціни та збереження її до користувача
 
 def process_price(message,order_number, user_id):
