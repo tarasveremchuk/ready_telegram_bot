@@ -86,7 +86,8 @@ def info(message):
         handle_send_price(message)
     elif message.text=="Відмовити замовлення":
         handle_cancel_order(message)
-
+    elif message.text=="Відправити бажану ціну":
+        handle_your_price(message)
     elif message.text=="Неправильний ТТН":
         handle_bad_ttn(message)
     elif message.text=="Пошук замовлень":
@@ -632,6 +633,9 @@ def my_items(message):
                 delivery_field=status_record[4] if status_record[4] is not None else 'Ще немає'
                 card_number=status_record[5] if status_record[5] is not None else 'Ще немає'
                 name_order = status_record[6] if status_record[6] is not None else 'Ще немає'
+                ttn_status20 = get_ttn_status(order_number)
+                card_status20= get_card_status(order_number)
+                ttn_and_card_status20=get_ttn_and_card_status(order_number)
                 if status == 1:
                     caption = f"➡️ *Номер замовлення:* {order_number}\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Назва товару:* {name_order}\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️  *Статус:* Пропозицію була подана на розгляд 😼\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Запропонована ціна:* {price} грн\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Номер накладної:* {ttn_number}"
                     bot.send_photo(chat_id=message.chat.id, photo=io.BytesIO(photo_data), caption=caption,
@@ -643,7 +647,7 @@ def my_items(message):
                     caption = f"➡️ *Номер замовлення:* {order_number}\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Назва товару:* {name_order}\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Статус:* Ціну було підтверджено ✅\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Запропонована ціна:* {price} грн\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Номер накладної:* {ttn_number}"
                     bot.send_photo(chat_id=message.chat.id, photo=io.BytesIO(photo_data), caption=caption,
                                     parse_mode='Markdown')
-                elif status == 4 and delivery_field=='Доставка наложним платежем':
+                elif get_ttn_status(order_number) is None and delivery_field=='Доставка наложним платежем':
                     caption = f"➡️ *Номер замовлення:* {order_number}\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Назва товару:* {name_order}\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Статус:* Оформлено доставку 📦\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Запропонована ціна:* {price} грн\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Номер накладної:* {ttn_number}"
 
                     # Створення кнопки "Відправити номер ТТН"
@@ -654,18 +658,78 @@ def my_items(message):
                     # Відправка повідомлення з фото, текстом та кнопкою
                     bot.send_photo(chat_id=message.chat.id, photo=io.BytesIO(photo_data), caption=caption,
                                    reply_markup=markup,parse_mode='Markdown')
-                elif status==4 and delivery_field=='Доставка через систему':
+
+                elif ttn_status20 is not None and delivery_field=='Доставка наложним платежем' and status==25:
+                    caption = f"➡️ *Номер замовлення:* {order_number}\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Назва товару:* {name_order}\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Статус:* Товар в дорозі 📦\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Запропонована ціна:* {price} грн\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Номер накладної:* {ttn_number}"
+
+                    # Створення кнопки "Відправити номер ТТН"
+                    markup = types.InlineKeyboardMarkup()
+                    ttn_button = types.InlineKeyboardButton("Редагувати номер накладної", callback_data=f"ttn1_{order_number}")
+                    markup.add(ttn_button)
+
+                    # Відправка повідомлення з фото, текстом та кнопкою
+                    bot.send_photo(chat_id=message.chat.id, photo=io.BytesIO(photo_data), caption=caption,
+                                   reply_markup=markup,parse_mode='Markdown')
+                elif ttn_status20 is  None and card_status20 is None and delivery_field=='Доставка через систему':
                     # Створення першого об'єкту markup і додавання до нього першої кнопки
                     markup = types.InlineKeyboardMarkup()
                     ttn_button = types.InlineKeyboardButton("Прикріпити номер накладної", callback_data=f"ttn_{order_number}")
                     markup.add(ttn_button)
 
                     # Створення другого об'єкту markup і додавання до нього другої кнопки
-                    ttn_button2 = types.InlineKeyboardButton('Відправте номер вашої карти',callback_data=f"card_{order_number}")
+                    ttn_button2 = types.InlineKeyboardButton('Прикріпити номер вашої карти',callback_data=f"card_{order_number}")
                     markup.add(ttn_button2)
 
                     # Ваш підготовлений caption
                     caption = f"➡️ *Номер замовлення:* {order_number}\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Назва товару:* {name_order}\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Статус:* Оформлено доставку 📦\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Запропонована ціна:* {price} грн\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Номер накладної:* {ttn_number}\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Номер карти:* {card_number}"
+
+                    # Відправка повідомлення з фото, текстом та об'єктом markup
+                    bot.send_photo(chat_id=message.chat.id, photo=io.BytesIO(photo_data), caption=caption,
+                                   reply_markup=markup, parse_mode='Markdown')
+                elif ttn_status20 is not None and card_status20 is None and delivery_field=='Доставка через систему':
+                    # Створення першого об'єкту markup і додавання до нього першої кнопки
+                    markup = types.InlineKeyboardMarkup()
+                    ttn_button = types.InlineKeyboardButton("Редагувати номер накладної", callback_data=f"ttn1_{order_number}")
+                    markup.add(ttn_button)
+
+                    # Створення другого об'єкту markup і додавання до нього другої кнопки
+                    ttn_button2 = types.InlineKeyboardButton('Прикріпити номер вашої карти',callback_data=f"card_{order_number}")
+                    markup.add(ttn_button2)
+
+                    # Ваш підготовлений caption
+                    caption = f"➡️ *Номер замовлення:* {order_number}\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Назва товару:* {name_order}\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Статус:* Товар в дорозі 📦\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Запропонована ціна:* {price} грн\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Номер накладної:* {ttn_number}\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Номер карти:* {card_number}"
+
+                    # Відправка повідомлення з фото, текстом та об'єктом markup
+                    bot.send_photo(chat_id=message.chat.id, photo=io.BytesIO(photo_data), caption=caption,
+                                   reply_markup=markup, parse_mode='Markdown')
+                elif ttn_status20 is  None and card_status20 is not None and delivery_field=='Доставка через систему':
+                    # Створення першого об'єкту markup і додавання до нього першої кнопки
+                    markup = types.InlineKeyboardMarkup()
+                    ttn_button = types.InlineKeyboardButton("Прикріпити номер накладної", callback_data=f"ttn_{order_number}")
+                    markup.add(ttn_button)
+
+                    # Створення другого об'єкту markup і додавання до нього другої кнопки
+                    ttn_button2 = types.InlineKeyboardButton('Редагувати номер вашої карти',callback_data=f"card1_{order_number}")
+                    markup.add(ttn_button2)
+
+                    # Ваш підготовлений caption
+                    caption = f"➡️ *Номер замовлення:* {order_number}\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Назва товару:* {name_order}\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Статус:* Товар в дорозі 📦\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Запропонована ціна:* {price} грн\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Номер накладної:* {ttn_number}\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Номер карти:* {card_number}"
+
+                    # Відправка повідомлення з фото, текстом та об'єктом markup
+                    bot.send_photo(chat_id=message.chat.id, photo=io.BytesIO(photo_data), caption=caption,
+                                   reply_markup=markup, parse_mode='Markdown')
+                elif ttn_status20 is not None and card_status20 is not None and delivery_field=='Доставка через систему':
+                    # Створення першого об'єкту markup і додавання до нього першої кнопки
+                    markup = types.InlineKeyboardMarkup()
+                    ttn_button = types.InlineKeyboardButton("Редагувати номер накладної", callback_data=f"ttn1_{order_number}")
+                    markup.add(ttn_button)
+
+                    # Створення другого об'єкту markup і додавання до нього другої кнопки
+                    ttn_button2 = types.InlineKeyboardButton('Редагувати номер вашої карти',callback_data=f"card1_{order_number}")
+                    markup.add(ttn_button2)
+
+                    # Ваш підготовлений caption
+                    caption = f"➡️ *Номер замовлення:* {order_number}\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Назва товару:* {name_order}\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Статус:* Товар в дорозі 📦\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Запропонована ціна:* {price} грн\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Номер накладної:* {ttn_number}\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Номер карти:* {card_number}"
 
                     # Відправка повідомлення з фото, текстом та об'єктом markup
                     bot.send_photo(chat_id=message.chat.id, photo=io.BytesIO(photo_data), caption=caption,
@@ -688,33 +752,48 @@ def my_items(message):
                 #     bot.send_photo(chat_id=message.chat.id, photo=io.BytesIO(photo_data), caption=caption,
                 #                    reply_markup=markup, parse_mode='Markdown')
 
-                elif status==6:
+                # elif status==6:
+                #     # Створення першого об'єкту markup і додавання до нього першої кнопки
+                #     markup = types.InlineKeyboardMarkup()
+                #     ttn_button = types.InlineKeyboardButton("Прикріпити номер накладної", callback_data=f"ttn_{order_number}")
+                #     markup.add(ttn_button)
+                #
+                #     # Створення другого об'єкту markup і додавання до нього другої кнопки
+                #     ttn_button2 = types.InlineKeyboardButton('Відправте номер вашої карти',callback_data=f"card_{order_number}")
+                #     markup.add(ttn_button2)
+                #
+                #     # Ваш підготовлений caption
+                #     caption = f"➡️ *Номер замовлення:* {order_number}\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Назва товару:* {name_order}\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Статус:* Відправлення в дорозі 📦\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Запропонована ціна:* {price} грн\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Номер накладної:* {ttn_number}\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Номер карти:* {card_number}"
+                #
+                #     # Відправка повідомлення з фото, текстом та об'єктом markup
+                #     bot.send_photo(chat_id=message.chat.id, photo=io.BytesIO(photo_data), caption=caption,
+                #                    reply_markup=markup, parse_mode='Markdown')
+
+                elif get_card_status(order_number) is None and delivery_field=='Доставка через систему':
                     # Створення першого об'єкту markup і додавання до нього першої кнопки
                     markup = types.InlineKeyboardMarkup()
-                    ttn_button = types.InlineKeyboardButton("Прикріпити номер накладної", callback_data=f"ttn_{order_number}")
-                    markup.add(ttn_button)
 
                     # Створення другого об'єкту markup і додавання до нього другої кнопки
-                    ttn_button2 = types.InlineKeyboardButton('Відправте номер вашої карти',callback_data=f"card_{order_number}")
-                    markup.add(ttn_button2)
-
-                    # Ваш підготовлений caption
-                    caption = f"➡️ *Номер замовлення:* {order_number}\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Назва товару:* {name_order}\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Статус:* Відправлення в дорозі 📦\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Запропонована ціна:* {price} грн\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Номер накладної:* {ttn_number}\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Номер карти:* {card_number}"
-
-                    # Відправка повідомлення з фото, текстом та об'єктом markup
-                    bot.send_photo(chat_id=message.chat.id, photo=io.BytesIO(photo_data), caption=caption,
-                                   reply_markup=markup, parse_mode='Markdown')
-
-                elif status==5 and delivery_field=='Доставка через систему':
-                    # Створення першого об'єкту markup і додавання до нього першої кнопки
-                    markup = types.InlineKeyboardMarkup()
-
-                    # Створення другого об'єкту markup і додавання до нього другої кнопки
-                    ttn_button2 = types.InlineKeyboardButton('Відправте номер вашої карти',callback_data=f"card_{order_number}")
+                    ttn_button2 = types.InlineKeyboardButton('Прикріпити номер вашої карти',callback_data=f"card_{order_number}")
                     markup.add(ttn_button2)
 
                     # Ваш підготовлений caption
                     caption = f"➡️ *Номер замовлення:* {order_number}\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Назва товару:* {name_order}\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Статус:* Оформлено доставку 📦\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Запропонована ціна:* {price} грн\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Номер накладної:* {ttn_number}\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Номер карти:* {card_number}"
+
+                    # Відправка повідомлення з фото, текстом та об'єктом markup
+                    bot.send_photo(chat_id=message.chat.id, photo=io.BytesIO(photo_data), caption=caption,
+                                   reply_markup=markup, parse_mode='Markdown')
+                elif card_status20 is not None and delivery_field == 'Доставка через систему' and status == 25  :
+                    # Створення першого об'єкту markup і додавання до нього першої кнопки
+                    markup = types.InlineKeyboardMarkup()
+
+                    # Створення другого об'єкту markup і додавання до нього другої кнопки
+                    ttn_button2 = types.InlineKeyboardButton('Редагувати номер вашої карти',
+                                                             callback_data=f"card1_{order_number}")
+                    markup.add(ttn_button2)
+
+                    # Ваш підготовлений caption
+                    caption = f"➡️ *Номер замовлення:* {order_number}\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Назва товару:* {name_order}\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Статус:* Товар в дорозі 📦\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Запропонована ціна:* {price} грн\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Номер накладної:* {ttn_number}\n▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n➡️ *Номер карти:* {card_number}"
 
                     # Відправка повідомлення з фото, текстом та об'єктом markup
                     bot.send_photo(chat_id=message.chat.id, photo=io.BytesIO(photo_data), caption=caption,
@@ -744,8 +823,9 @@ def my_items(message):
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('ttn_'))
 def handle_ttn_number(call):
-    if get_ttn_status(current_order_number) is None:
-        order_number = call.data.split('_')[1]
+    order_number = call.data.split('_')[1]
+
+    if get_ttn_status(order_number) is None:
         bot.send_message(call.message.chat.id, 'Прикріпити номер накладної\n               ⬇️⬇️⬇️')
 
         # Реєструємо функцію, яка буде обробляти наступне повідомлення користувача
@@ -754,16 +834,28 @@ def handle_ttn_number(call):
         bot.send_message(call.message.chat.id, 'Ви уже відправляли номер ТТН!')
 
 
+@bot.callback_query_handler(func=lambda call: call.data.startswith('ttn1_'))
+def handle_edit_ttn_number(call):
+    order_number = call.data.split('_')[1]
+
+    if get_ttn_status(order_number) is not None:
+        bot.send_message(call.message.chat.id, 'Редагувати номер накладної\n               ⬇️⬇️⬇️')
+
+        # Реєструємо функцію, яка буде обробляти наступне повідомлення користувача
+        bot.register_next_step_handler(call.message, edit_ttn_number, order_number)
+    else:
+        bot.send_message(call.message.chat.id, 'УПС.... Виникла помилка!')
+
 
 def save_ttn_number(message, order_number):
         # Отримуємо введений користувачем номер ТТН
-        if get_ttn_status(current_order_number) is None:
+        if get_ttn_status(order_number) is None:
 
             ttn_number = message.text
             # Збереження номера ТТН у базу даних
             conn = sqlite3.connect('photos.db')
             cursor = conn.cursor()
-            cursor.execute('UPDATE photos SET nomer_ttn = ?, status = 5 WHERE order_number = ? AND user_id = ?',
+            cursor.execute('UPDATE photos SET nomer_ttn = ?, status = 25 WHERE order_number = ? AND user_id = ?',
                            (ttn_number, order_number, message.from_user.id))
             conn.commit()
             conn.close()
@@ -778,14 +870,37 @@ def save_ttn_number(message, order_number):
                              f"Номер ТТН уже було збережено")
 
 
+def edit_ttn_number(message, order_number):
+
+    # Отримуємо введений користувачем номер ТТН
+    if get_ttn_status(order_number) is not None:
+
+        ttn_number = message.text
+        # Збереження номера ТТН у базу даних
+        conn = sqlite3.connect('photos.db')
+        cursor = conn.cursor()
+        cursor.execute('UPDATE photos SET nomer_ttn = ?, status = 13 WHERE order_number = ? AND user_id = ?',
+                       (ttn_number, order_number, message.from_user.id))
+        conn.commit()
+        conn.close()
+
+        # Відправляємо відповідь користувачу
+        reply_text = f"Твій новий номер накладної ТТН: {ttn_number}. Номер ТТН збережено."
+        bot.send_message(message.chat.id, reply_text)
+        bot.send_message(-917631518,
+                         f"Користувач @{message.chat.username} відредагував номер накладної {ttn_number}. Номер замовлення: #{order_number}")
+    else:
+        bot.send_message(message.chat.id,
+                         f"Номер ТТН уже було збережено")
+
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('card_'))
 def handle_card_number(call):
+    order_number = call.data.split('_')[1]
 
-    if get_card_status(current_order_number) is None:
-        order_number = call.data.split('_')[1]
-        bot.send_message(call.message.chat.id, 'Відправте номер вашої карти\n '
+    if get_card_status(order_number) is None:
+        bot.send_message(call.message.chat.id, 'Прикріпити номер вашої карти\n '
                                                '                    ⬇️⬇️⬇️'
                          )
 
@@ -793,9 +908,21 @@ def handle_card_number(call):
         bot.register_next_step_handler(call.message, save_card_number, order_number)
     else:
         bot.send_message(message.chat.id,
-                         f"Ти уже зберіг номер карти!")
+                         f"УПС....Виникла помилка!")
+@bot.callback_query_handler(func=lambda call: call.data.startswith('card1_'))
+def handle_card_edit_number(call):
+    order_number = call.data.split('_')[1]
 
+    if get_card_status(order_number) is not None:
+        bot.send_message(call.message.chat.id, 'Редагувати номер вашої карти\n '
+                                               '                    ⬇️⬇️⬇️'
+                         )
 
+        # Реєструємо функцію, яка буде обробляти наступне повідомлення користувача
+        bot.register_next_step_handler(call.message, edit_card_number, order_number)
+    else:
+        bot.send_message(message.chat.id,
+                         f"УПС....Виникла помилка!")
 def save_card_number(message, order_number):
 
     # Отримуємо введений користувачем номер ТТН
@@ -806,7 +933,7 @@ def save_card_number(message, order_number):
         # Збереження номера ТТН у базу даних
         conn = sqlite3.connect('photos.db')
         cursor = conn.cursor()
-        cursor.execute('UPDATE photos SET nomer_card = ?, status = 6 WHERE order_number = ? AND user_id = ?',
+        cursor.execute('UPDATE photos SET nomer_card = ?, status = 25 WHERE order_number = ? AND user_id = ?',
                        (card_number, order_number, message.from_user.id))
         conn.commit()
         conn.close()
@@ -816,6 +943,32 @@ def save_card_number(message, order_number):
         bot.send_message(message.chat.id, reply_text)
         bot.send_message(-917631518,
                          f"Користувач @{message.chat.username} з ід {message.chat.id} відправив номер своєї карти: {card_number}\nНомер замовлення: {order_number}"
+                         )
+    else:
+        bot.send_message(message.chat.id,
+                         f"Номер карти уже було збережено")
+
+
+def edit_card_number(message, order_number):
+
+    # Отримуємо введений користувачем номер ТТН
+    if get_card_status(order_number) is not None:
+
+        card_number = message.text
+
+        # Збереження номера ТТН у базу даних
+        conn = sqlite3.connect('photos.db')
+        cursor = conn.cursor()
+        cursor.execute('UPDATE photos SET nomer_card = ?, status = 13 WHERE order_number = ? AND user_id = ?',
+                       (card_number, order_number, message.from_user.id))
+        conn.commit()
+        conn.close()
+
+        # Відправляємо відповідь користувачу
+        reply_text = f"Ти надіслав новий номер своєї карти: {card_number}. Номер карти збережено."
+        bot.send_message(message.chat.id, reply_text)
+        bot.send_message(-917631518,
+                         f"Користувач @{message.chat.username} з ід {message.chat.id} відредагував номер своєї карти: {card_number}\nНомер замовлення: {order_number}"
                          )
     else:
         bot.send_message(message.chat.id,
@@ -839,14 +992,39 @@ def handle_callback_query(call):
 
     elif call.data == 'no':
         if get_price_status(current_order_number) is None:
+            markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+            button2 = types.KeyboardButton('Відправити бажану ціну')
+            button3 = types.KeyboardButton('↩️ Назад до меню')
+
+            markup.row(button2,button3)
             bot.send_message(message.chat.id,
-                             "Ми поважаємо твоє рішення. \n\n📍Один з працівників ознайомиться з твоїм замовленням, та *можливо буде запропонована інша ціна*.",parse_mode='Markdown')
+                             "Ми поважаємо твоє рішення. \n\n📍Один з працівників ознайомиться з твоїм замовленням, та *можливо буде запропонована інша ціна*.",parse_mode='Markdown', reply_markup=markup)
             update_price_status(current_order_number, 14)  # Змінити статус на 3
 
             propose_price(message, owner_id, group_id)
+            bot.register_next_step_handler(message, handle_your_price)
+
+
         else:
             bot.send_message(message.chat.id,"Ти вже зробив вибір")
 
+
+
+
+def handle_your_price(message):
+    bot.reply_to(message, 'Введіть бажану ціну: ')
+    bot.register_next_step_handler(message, process_your_price,current_order_number)
+
+
+def process_your_price(message, current_order_number):
+    if message.text.isdigit():
+        group_id = '-917631518'
+        price = message.text  # Отримуємо ідентифікатор користувача з повідомлення
+        bot.send_message(group_id,
+                         f"Користувач @{message.chat.username} запропонував свою ціну {price} грн\nНомер замовлення: {current_order_number}")
+        bot.reply_to(message, '📍Один з працівників ознайомиться з твоєю пропозицію і повідомить тебе!')
+    elif message.text=="↩️ Назад до меню":
+        welcome(message)
 
 
 
@@ -1311,6 +1489,17 @@ def get_ttn_status(order_number):
         return result[0]
     else:
         return None
+def get_ttn_and_card_status(order_number):
+    conn = sqlite3.connect('photos.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT nomer_ttn,nomer_card FROM photos WHERE order_number = ?', (order_number,))
+    result = cursor.fetchone()
+    cursor.close()
+    conn.close()
+    if result:
+        return result[0],result[1]
+    else:
+        return None
 def get_card_status(order_number):
     conn = sqlite3.connect('photos.db')
     cursor = conn.cursor()
@@ -1360,7 +1549,7 @@ def update_price_status(order_number, status):
     cursor.close()
     conn.close()
 
-current_order_number = 1
+# current_order_number = 1
 
 
 @bot.message_handler(func=lambda message: message.text == 'Речі, які ми купуємо')
