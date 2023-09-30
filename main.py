@@ -35,10 +35,6 @@ def welcome(message):
             )""")
     connect.commit()
 
-    user_id = [message.chat.id]
-    cursor.execute("INSERT INTO login_id VALUES (?);", user_id)
-    connect.commit()
-
     user_id = message.from_user.id
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     button1 = types.KeyboardButton('👕➡️💵 Продати')
@@ -84,6 +80,8 @@ def info(message):
         OrestLoh(message)
     elif message.text == "Відправити ціну":
         handle_send_price(message)
+    elif message.text == "Встановити час":
+        handle_send_time(message)
     elif message.text=="Відмовити замовлення":
         handle_cancel_order(message)
     elif message.text=="Відправити бажану ціну":
@@ -110,15 +108,44 @@ def info(message):
 
 
     elif message.text == '📷 Відправити фото 📸':
+        conn2 = sqlite3.connect('photos.db')
+        cursor2 = conn2.cursor()
+        # Створення таблиці для збереження фотографій
+        cursor2.execute('''
+                              CREATE TABLE IF NOT EXISTS photos (
+                                  id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                  user_id INTEGER,
+                                  file BLOB,
+                                  order_number INTEGER,
+                                  price INTEGER,
+                                  status INTEGER,
+                                  delivery TEXT,
+                                  date_order DATETIME,
+                                  nomer_ttn INTEGER,
+                                  nomer_card INTEGER,
+                                  price_status TEXT,
+                                  name_order TEXT,
+                                  asstimated_time INTEGER   
+                              )
+                          ''')
+        conn2.commit()
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
         button2 = types.KeyboardButton('✅ Я відправив усі фото')
         # markup.row(button2)
         # markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
         button3 = types.KeyboardButton('↩️ Назад до меню')
         markup.row(button2, button3)
-
+        conn = sqlite3.connect('photos.db')
+        cursor = conn.cursor()
         global last_order_number
         last_order_number = None
+        # Оновлюємо номер замовлення
+        cursor.execute('SELECT MAX(order_number) FROM photos')
+        result = cursor.fetchone()[0]
+        if result is None:
+            last_order_number = 1
+        else:
+            last_order_number = int(result) + 1
         sentPhotoChapter(message)
 
         @bot.message_handler(content_types=['photo'])
@@ -139,7 +166,8 @@ def info(message):
                                nomer_ttn INTEGER,
                                nomer_card INTEGER,
                                price_status TEXT,
-                               name_order TEXT
+                               name_order TEXT,
+                               asstimated_time INTEGER DEFAULT 15
                            )
                        ''')
             conn.commit()
@@ -158,17 +186,10 @@ def info(message):
                 # Кодування фотографії в base64
                 encoded_photo = base64.b64encode(file)
 
-                global last_order_number
 
                 # Якщо це перше фото або кнопка "Відправити фото" була натиснута, створюємо новий номер замовлення
-                if last_order_number is None or message.text == '📷 Відправити фото 📸':
-                    # Оновлюємо номер замовлення
-                    cursor.execute('SELECT MAX(order_number) FROM photos')
-                    result = cursor.fetchone()[0]
-                    if result is None:
-                        last_order_number = 1
-                    else:
-                        last_order_number = int(result) + 1
+
+
 
                 status = 8  # Значення статусу 8
 
@@ -222,7 +243,35 @@ def info(message):
 
 
 
+
+
+
+# @bot.message_handler(commands=['send_time'])
+# def handle_send_time(message):
+#     if message.from_user.id == 788388571 or message.from_user.id == 5792353056 or message.from_user.id ==5792353056:
+#         bot.reply_to(message, 'Введіть час очікування: ')
+#         bot.register_next_step_handler(message, process_time)
+#     else:
+#         bot.reply_to(message, 'У вас немає доступу до цієї команди.')
+
+
+# def process_time(message):
+#     time = message.text
+#     connect = sqlite3.connect('photos.db')
+#     cursor = connect.cursor()
+#
+#     # Ensure time is passed as a single-element tuple
+#     cursor.execute("UPDATE photos SET asstimated_time=?", (time,))
+#
+#     connect.commit()
+#     connect.close()
+#     bot.reply_to(message, f'Час очікування збережено: {time} хвилин')
+
+
 def check_and_update_status(message):
+
+
+
     user_id = message.from_user.id
 
     conn = sqlite3.connect('photos.db')
@@ -239,7 +288,7 @@ def check_and_update_status(message):
     row = cursor.fetchone()
 
     if row is not None:
-        status, order_number = row
+        status, order_number= row
         if status == 8:
             cursor.execute('UPDATE photos SET status = 9 WHERE order_number = ? AND user_id = ?',
                            (order_number, message.from_user.id))
@@ -297,13 +346,14 @@ def adminPanel(message):
         button3 = types.KeyboardButton('Пошук замовлень')
         button5 = types.KeyboardButton('Відмовити замовлення')
         button6 = types.KeyboardButton('Неправильний ТТН')
-
+        button8 = types.KeyboardButton('Встановити час')
         button4 = types.KeyboardButton('↩️ Назад до меню')
         # button7 = types.KeyboardButton('Скачати базу')
 
         markup.row(button1, button2)
         markup.row(button3,button5)
-        markup.row(button4,button6)
+        markup.row(button8,button6)
+        markup.row(button4)
         bot.send_message(message.chat.id, 'Ти перейшов у розділ Адмін панель', reply_markup=markup)
 
 
@@ -552,12 +602,14 @@ def send_all_photos(message):
         last_order_number = int(result)
 
     # Вибірка фотографій для певного номера замовлення
-    cursor.execute('SELECT file FROM photos WHERE order_number = ?', (last_order_number,))
+    cursor.execute('SELECT file,asstimated_time FROM photos WHERE order_number = ?', (last_order_number,))
     photo_records = cursor.fetchall()
 
     if len(photo_records) > 0:
         for photo_record in photo_records:
             encoded_photo = photo_record[0]
+            asst_time = photo_record[0]
+
             photo_data = base64.b64decode(encoded_photo)
 
             # Відправлення фотографій до групи
@@ -571,6 +623,8 @@ def send_all_photos(message):
                                           '📍Щоб переглянути статус пропозиції перейди до розділу "Мої замовлення".\n\n'
                                           '📍Один з наших працівників розгляне вашу пропозицію та запропонує вам найкращу ціну, роблячи це максимально швидко 🚀',
                          reply_markup=markup)
+
+        bot.send_message(message.chat.id,f"Приблизний час очікування {asst_time}" ,reply_markup=markup)
     else:
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
         button1 = types.KeyboardButton('Надіслати фото')
