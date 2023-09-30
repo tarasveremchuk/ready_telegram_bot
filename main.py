@@ -268,6 +268,7 @@ def check_and_update_status(message):
                                               '📍Щоб переглянути статус вашого товару перейди до розділу "Мої замовлення".\n\n'
                                               '📍Один з наших працівників розгляне твою пропозицію та запропонує тобі найкращу ціну, роблячи це максимально швидко 🚀')
             hide_markup = types.ReplyKeyboardRemove()
+            bot.send_message(message.chat.id, '[f[f[f[f[f[]')
 
             bot.send_message(message.chat.id,'''*‼️Придумай назву для замовлення.*
 
@@ -411,7 +412,7 @@ def check_photos_sent(user_id):
                    (user_id, thirty_seconds_ago, current_time))
     result = cursor.fetchone()[0]
     conn.close()
-
+    #fds
     return result > 0
 
 @bot.message_handler(commands=['start', 'help', 'anything'])
