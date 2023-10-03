@@ -25,7 +25,7 @@ answers = ['Я не зрозумів,що ти хочеш сказати.', 'В�
 # Обработка команды /start
 allowed_user_id = 788388571
 
-
+global_time = None
 @bot.message_handler(commands=['start'])
 def welcome(message):
     connect = sqlite3.connect('users.db')
@@ -84,6 +84,8 @@ def info(message):
         OrestLoh(message)
     elif message.text == "Відправити ціну":
         handle_send_price(message)
+    elif message.text == "Встановити час":
+        handle_start(message)
     elif message.text=="Відмовити замовлення":
         handle_cancel_order(message)
     elif message.text=="Відправити бажану ціну":
@@ -100,6 +102,8 @@ def info(message):
          check_and_update_status(message)
     elif message.text=="Адмін панель":
         adminPanel(message)
+    elif message.text == 'Скачать базу':
+        extract_and_send_data(message)
     elif message.text == '❓Як ми оцінюємо товар❓':
         OtsinkaTovaru(message)
 
@@ -239,6 +243,109 @@ def info(message):
         bot.send_message(message.chat.id, answers[random.randint(0, 3)])
 
 
+def handle_start(message):
+    if message.from_user.id == 788388571 or message.from_user.id == 5792353056 or message.from_user.id ==5792353056:
+        # Функція, що обробляє команду /start
+        bot.send_message(message.chat.id, "Введіть час очікування : ")
+        bot.register_next_step_handler(message, handle_text)
+    else:
+        bot.reply_to(message, 'У вас немає доступу до цієї команди.')
+
+
+
+def handle_text(message):
+    # Функція, що обробляє текстові повідомлення
+    conn = sqlite3.connect('database.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS saved_times (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            global_time TEXT
+        )
+    ''')
+
+    # Збереження змін до бази даних
+    conn.commit()
+    global global_time  # Дозволяємо функції використовувати глобальну змінну
+
+    try:
+        user_input = message.text
+        # Тут можна додати логіку для перевірки правильності формату часу
+
+        global_time = user_input  # Зберігаємо введений час у глобальну змінну
+        cursor.execute('''
+            INSERT INTO saved_times (global_time)
+            VALUES (?)''', (global_time,))
+        conn.commit()
+        bot.send_message(message.chat.id, f"Ви ввели час: {global_time} хвилин")
+
+    except ValueError:
+        bot.send_message(message.chat.id, "Некоректний формат часу. Спробуйте ще раз.")
+# def update_estimated_time(message):
+#     conn = sqlite3.connect('photos.db')
+#     cursor = conn.cursor()
+#     # Отримуємо всі записи з таблиці "photos"
+#     cursor.execute("SELECT id FROM photos")
+#     rows = cursor.fetchall()
+#     estimated_time = 60
+#
+#     order_message = f"Час очікування було встановлено: {estimated_time}"
+#     bot.send_message(chat_id=message.chat.id, text=order_message)
+#     # Проходимося по кожному запису та оновлюємо поле "asstimated_time"
+#     for row in rows:
+#         photo_id = row[0]
+#         # Припустимо, що ми хочемо встановити estimated_time в 60 хвилин для кожного запису
+#
+#         # Оновлюємо поле "asstimated_time" для кожного запису
+#         cursor.execute("UPDATE photos SET asstimated_time = ? WHERE id = ?", (estimated_time, photo_id))
+#
+#     # Зберігаємо зміни
+#     conn.commit()
+
+
+
+def extract_and_send_data(message):
+    if message.from_user.id == 788388571 or message.from_user.id == 5792353056 or message.from_user.id ==5792353056:
+        conn = sqlite3.connect('photos.db')
+        cursor = conn.cursor()
+
+        # Отримання всіх записів з бази даних
+        cursor.execute('SELECT * FROM photos')
+        rows = cursor.fetchall()
+
+        # Створення текстового представлення даних
+        data_text = "Дані з бази даних:\n"
+        for row in rows:
+            data_text += f"ID: {row[0]}\n"
+            data_text += f"User ID: {row[1]}\n"
+            data_text += f"File: {row[2]}\n"
+            data_text += f"Order Number: {row[3]}\n"
+            data_text += f"Price: {row[4]}\n"
+            data_text += f"Status: {row[5]}\n"
+            data_text += f"Delivery: {row[6]}\n"
+            data_text += f"Date Order: {row[7]}\n"
+            data_text += f"Tracking Number: {row[8]}\n"
+            data_text += f"Card Number: {row[9]}\n"
+            data_text += f"Price Status: {row[10]}\n"
+            data_text += f"Name Order: {row[11]}\n"
+            data_text += f"Estimated Time: {row[12]}\n"
+            data_text += "\n"  # Роздільник між записами
+
+        # Отримання токену бота з конфігурацій або деінде
+        bot_token = "YOUR_BOT_TOKEN"  # Замініть на свій токен
+
+        # Отримання чат-ідентифікатору
+        chat_id = "YOUR_CHAT_ID"  # Замініть на свій ідентифікатор чату
+
+        # Поділ тексту на частини (максимальний розмір повідомлення Telegram - 4096 символів)
+        max_message_length = 4096
+        chunks = [data_text[i:i + max_message_length] for i in range(0, len(data_text), max_message_length)]
+
+        # Відправлення кожної частини тексту
+        for chunk in chunks:
+            bot.send_message(message.chat.id, text=chunk)
+    else:
+        bot.reply_to(message, 'У вас немає доступу до цієї команди.')
 
 
 def check_and_update_status(message):
@@ -263,12 +370,12 @@ def check_and_update_status(message):
             cursor.execute('UPDATE photos SET status = 9 WHERE order_number = ? AND user_id = ?',
                            (order_number, message.from_user.id))
             conn.commit()
-
+            est_time = get_global_time()
             bot.send_message(message.chat.id, '✅ Твої фото були успішно завантажені 😌\n\n'
                                               '📍Щоб переглянути статус вашого товару перейди до розділу "Мої замовлення".\n\n'
                                               '📍Один з наших працівників розгляне твою пропозицію та запропонує тобі найкращу ціну, роблячи це максимально швидко 🚀')
             hide_markup = types.ReplyKeyboardRemove()
-            bot.send_message(message.chat.id, '[f[f[f[f[f[]')
+            bot.send_message(message.chat.id, f'* Середній час очікування: {est_time} хвилин *',parse_mode='Markdown')
 
             bot.send_message(message.chat.id,'''*‼️Придумай назву для замовлення.*
 
@@ -285,6 +392,23 @@ def check_and_update_status(message):
 
 
     conn.close()
+def get_global_time():
+    try:
+        conn = sqlite3.connect('database.db')
+        cursor = conn.cursor()
+        cursor.execute("SELECT global_time FROM saved_times ORDER BY id DESC LIMIT 1")
+        global_time = cursor.fetchone()
+        conn.close()
+
+        if global_time:
+            return global_time[0]  # Повертаємо значення global_time
+        else:
+            return None
+
+    except sqlite3.Error as e:
+        print("Виникла помилка при спробі отримати global_time:", str(e))
+        return None
+
 def check_photos(message):
     penultimate_message = message.history[-2]
     if penultimate_message.photo:
@@ -317,13 +441,16 @@ def adminPanel(message):
         button3 = types.KeyboardButton('Пошук замовлень')
         button5 = types.KeyboardButton('Відмовити замовлення')
         button6 = types.KeyboardButton('Неправильний ТТН')
+        button8 = types.KeyboardButton('Встановити час ')
 
         button4 = types.KeyboardButton('↩️ Назад до меню')
-        # button7 = types.KeyboardButton('Скачати базу')
+        button7 = types.KeyboardButton('Скачати базу')
 
         markup.row(button1, button2)
         markup.row(button3,button5)
-        markup.row(button4,button6)
+        markup.row(button8,button6)
+        markup.row(button4)
+
         bot.send_message(message.chat.id, 'Ти перейшов у розділ Адмін панель', reply_markup=markup)
 
 
