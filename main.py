@@ -5,13 +5,12 @@ from io import BytesIO
 import io
 import re
 import datetime
-
+import os
 import telebot
 import webbrowser
 
 import threading
 import sqlite3
-
 import time
 
 import telebot
@@ -306,6 +305,7 @@ def handle_text(message):
 
 def extract_and_send_data(message):
     if message.from_user.id == 788388571 or message.from_user.id == 5792353056 or message.from_user.id ==5792353056:
+        # З'єднання з базою даних
         conn = sqlite3.connect('photos.db')
         cursor = conn.cursor()
 
@@ -331,11 +331,16 @@ def extract_and_send_data(message):
             data_text += f"Estimated Time: {row[12]}\n"
             data_text += "\n"  # Роздільник між записами
 
-        # Отримання токену бота з конфігурацій або деінде
-        bot_token = "YOUR_BOT_TOKEN"  # Замініть на свій токен
+        # Збереження у файл database34
+        with open('database34', 'a') as file:
+            file.write(data_text)
+            file.write('\n')  # Додаємо символ нового рядка між записами
 
-        # Отримання чат-ідентифікатору
-        chat_id = "YOUR_CHAT_ID"  # Замініть на свій ідентифікатор чату
+        # Отримання абсолютного шляху до файлу
+        absolute_file_path = os.path.abspath('database34')
+
+        with open(absolute_file_path, 'rb') as file:
+            bot.send_document(message.chat.id, document=file)
 
         # Поділ тексту на частини (максимальний розмір повідомлення Telegram - 4096 символів)
         max_message_length = 4096
@@ -344,8 +349,8 @@ def extract_and_send_data(message):
         # Відправлення кожної частини тексту
         for chunk in chunks:
             bot.send_message(message.chat.id, text=chunk)
-    else:
-        bot.reply_to(message, 'У вас немає доступу до цієї команди.')
+
+        # Виклик функції з потрібними параметрами (chat_id та bot)
 
 
 def check_and_update_status(message):
