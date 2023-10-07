@@ -83,6 +83,8 @@ def info(message):
         OrestLoh(message)
     elif message.text == "Відправити ціну":
         handle_send_price(message)
+    elif message.text == "Оплата на карту":
+        handle_send_money(message)
     elif message.text == "Встановити час":
         handle_start(message)
     elif message.text=="Відмовити замовлення":
@@ -376,11 +378,11 @@ def check_and_update_status(message):
                            (order_number, message.from_user.id))
             conn.commit()
             est_time = get_global_time()
-            bot.send_message(message.chat.id, '✅ Твої фото були успішно завантажені 😌\n\n'
-                                              '📍Щоб переглянути статус вашого товару перейди до розділу "Мої замовлення".\n\n'
-                                              '📍Один з наших працівників розгляне твою пропозицію та запропонує тобі найкращу ціну, роблячи це максимально швидко 🚀')
+            # bot.send_message(message.chat.id, '✅ Твої фото були успішно завантажені 😌\n\n'
+            #                                   '📍Щоб переглянути статус вашого товару перейди до розділу "Мої замовлення".\n\n'
+            #                                   '📍Один з наших працівників розгляне твою пропозицію та запропонує тобі найкращу ціну, роблячи це максимально швидко 🚀')
             hide_markup = types.ReplyKeyboardRemove()
-            bot.send_message(message.chat.id, f'* Середній час очікування: {est_time} хвилин *',parse_mode='Markdown')
+            # bot.send_message(message.chat.id, f'* Середній час очікування: {est_time} хвилин *',parse_mode='Markdown')
 
             bot.send_message(message.chat.id,'''*‼️Придумай назву для замовлення.*
 
@@ -450,11 +452,12 @@ def adminPanel(message):
 
         button4 = types.KeyboardButton('↩️ Назад до меню')
         button7 = types.KeyboardButton('Скачати базу')
+        button9 = types.KeyboardButton('Оплата на карту')
 
         markup.row(button1, button2)
         markup.row(button3,button5)
         markup.row(button8,button6)
-        markup.row(button4)
+        markup.row(button4,button9)
 
         bot.send_message(message.chat.id, 'Ти перейшов у розділ Адмін панель', reply_markup=markup)
 
@@ -514,6 +517,8 @@ def process_name_order(message, order_number):
     button2 = types.KeyboardButton('↩️ Назад до меню')
     markup.row(button2)
     name_order = message.text
+    reply_text = f"Ти надіслав назву до замовлення #{order_number}: {name_order}!"
+    bot.send_message(message.chat.id, reply_text, reply_markup=markup)  # Відправка разом з кнопкою
 
     # Збереження номера ТТН у базу даних
     conn = sqlite3.connect('photos.db')
@@ -524,10 +529,42 @@ def process_name_order(message, order_number):
     conn.close()
 
     # Відправляємо відповідь користувачу
-    reply_text = f"Ти надіслав назву до замовлення #{order_number}: {name_order}!"
+    user_id = message.from_user.id
+    est_time = get_global_time()
+    bot.send_message(message.chat.id, '✅ Твої фото були успішно завантажені 😌\n\n'
+                                      '📍Щоб переглянути статус вашого товару перейди до розділу "Мої замовлення".\n\n'
+                                      '📍Один з наших працівників розгляне твою пропозицію та запропонує тобі найкращу ціну, роблячи це максимально швидко 🚀')
+    hide_markup = types.ReplyKeyboardRemove()
+    bot.send_message(message.chat.id, f'* Середній час очікування: {est_time} хвилин *', parse_mode='Markdown')
+
+
+
+    conn2 = sqlite3.connect('photos.db')
+    cursor2 = conn2.cursor()
+
+    cursor2.execute('''
+                SELECT status, order_number
+                FROM photos
+                WHERE user_id = ?
+                ORDER BY id DESC
+                LIMIT 1
+            ''', (user_id,))
+
+    row = cursor2.fetchone()
+
+    if row is not None:
+        status, order_number = row
+        if status == 8:
+            cursor2.execute('UPDATE photos SET status = 9 WHERE order_number = ? AND user_id = ?',
+                           (order_number, message.from_user.id))
+            conn2.commit()
+
+
+
+
+    # Приховуємо панель з кнопками
     reply_text2 = f"Користувач @{message.from_user.username} назву до замовлення #{order_number}: {name_order}!"
 
-    bot.send_message(message.chat.id, reply_text, reply_markup=markup)  # Відправка разом з кнопкою
     chatid='-917631518'
     bot.send_message(chatid, reply_text2, reply_markup=markup)
 
@@ -1063,7 +1100,7 @@ def handle_card_number(call):
         # Реєструємо функцію, яка буде обробляти наступне повідомлення користувача
         bot.register_next_step_handler(call.message, save_card_number, order_number)
     else:
-        bot.send_message(message.chat.id,
+        bot.send_message(call.message.chat.id,
                          f"УПС....Виникла помилка!")
 @bot.callback_query_handler(func=lambda call: call.data.startswith('card1_'))
 def handle_card_edit_number(call):
@@ -1210,7 +1247,13 @@ def handle_send_price(message):
     else:
         bot.reply_to(message, 'У вас немає доступу до цієї команди.')
 
-
+@bot.message_handler(commands=['send_price'])
+def handle_send_money(message):
+    if message.from_user.id == 788388571 or message.from_user.id == 5792353056 or message.from_user.id ==5792353056:
+        bot.reply_to(message, 'Введіть id користувача')
+        bot.register_next_step_handler(message, process_order_number_money)
+    else:
+        bot.reply_to(message, 'У вас немає доступу до цієї команди.')
 def send_db_command(update, context):
     send_database(update.message)
 def send_database(message):
@@ -1267,6 +1310,40 @@ def send_broadcast_message2(message):
     # Надсилаємо повідомлення кожному користувачу
     for user_id in user_ids:
         bot.send_message(chat_id=user_id, text=message_text)
+
+
+def process_order_number_money(message):
+    user_id = message.text  # Отримуємо ідентифікатор користувача з повідомлення
+
+    conn2 = sqlite3.connect('photos.db')
+    cursor2 = conn2.cursor()
+    cursor2.execute('SELECT * FROM photos WHERE user_id = ?', (user_id,))
+    result2 = cursor2.fetchone()
+    conn2.close()
+
+    if result2:
+        bot.reply_to(message, 'Введіть номер замовлення:')
+        bot.register_next_step_handler(message, process_order_number_input_money, user_id)
+    else:
+        bot.reply_to(message, 'Номер користувача не знайдено')
+
+
+def process_order_number_input_money(message, user_id):
+    order_number = message.text
+
+    # Перевірка наявності номера замовлення у базі даних
+    conn = sqlite3.connect('photos.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM photos WHERE order_number = ?', (order_number,))
+    result = cursor.fetchone()
+
+    if result:
+      process_money(message, order_number, user_id)
+
+    else:
+        bot.reply_to(message, 'Номер замовлення не знайдено')
+
+    conn.close()
 def process_order_number(message):
     user_id = message.text  # Отримуємо ідентифікатор користувача з повідомлення
 
@@ -1459,6 +1536,7 @@ def process_price(message,order_number, user_id):
     conn = sqlite3.connect('photos.db')
     cursor = conn.cursor()
     cursor.execute('UPDATE photos SET status = 2, Price = ? WHERE user_id = ? AND order_number = ?', (price, user_id, order_number))
+    conn.commit()
     conn.close()
     # Зберегти номер замовлення в змінну
     global current_order_number
@@ -1471,6 +1549,24 @@ def process_price(message,order_number, user_id):
     markup.add(yes_button, no_button)
     bot.send_message(user_id, 'Погоджуєшся з ціною?', reply_markup=markup)
 
+
+
+def process_money(message,order_number, user_id):
+    conn2 = sqlite3.connect('photos.db')
+    cursor2 = conn2.cursor()
+    cursor2.execute(
+        'SELECT status, price, file, nomer_ttn,delivery, nomer_card,name_order FROM photos WHERE user_id = ? AND order_number = ?',
+        (user_id, order_number))
+    status_record = cursor2.fetchone()
+    price_text = status_record[1]
+    nomer_card = status_record[5]
+    name_order = status_record[6]
+
+
+    update_price_status(order_number, None)
+
+    price = message.text
+    bot.send_message(user_id, f"‼️*Кошти були перераховані * за замовлення #{order_number} '{name_order}' на карту {nomer_card} у розмірі *{price_text}  грн*", parse_mode='Markdown')
 
 
 
@@ -1710,7 +1806,7 @@ def update_price_status(order_number, status):
 @bot.message_handler(func=lambda message: message.text == 'Речі, які ми купуємо')
 def handle_buying_items(message):
     markup = create_inline_keyboard()
-    bot.send_message(message.chat.id, 'Ось речі, які ми купуємо *з найвищим пріоритетом:*', reply_markup=markup,parse_mode="Markdown")
+    bot.send_message(message.chat.id, 'Ось речі, які ми купуємо *з найвищим пріоритетом:*\n\n*Натисніть на кнопки* знизу,щоб дізнатися більше про список речей!', reply_markup=markup,parse_mode="Markdown")
 
 
 def create_inline_keyboard():
@@ -1722,7 +1818,6 @@ def create_inline_keyboard():
     button_carhartt = types.InlineKeyboardButton('Carhartt', callback_data='buying_item_carhartt')
     button_tommy_hilfiger = types.InlineKeyboardButton('Tommy Hilfiger', callback_data='buying_item_tommy_hilfiger')
     button_Yves_Saint_Laurent  = types.InlineKeyboardButton('Yves Saint Laurent ', callback_data='buying_item_Yves_Saint_Laurent')
-
     button_lacoste = types.InlineKeyboardButton('Lacoste', callback_data='buying_item_lacoste')
     button_ralph_lauren = types.InlineKeyboardButton('Ralph Lauren', callback_data='buying_item_ralph_lauren')
     button_dickies = types.InlineKeyboardButton('Dickies', callback_data='buying_item_dickies')
