@@ -40,12 +40,12 @@ def welcome(message):
 
     user_id = message.from_user.id
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    button1 = types.KeyboardButton('👕➡️💵 Продати')
-    button2 = types.KeyboardButton('🧳 Мої замовлення 🧳')
-    button6 = types.KeyboardButton('✏️ Звернутися до підтримки ✏️')
+    button1 = types.KeyboardButton('Продати 💸')
+    button2 = types.KeyboardButton('Мої замовлення 🧳')
+    button6 = types.KeyboardButton('Звернутися до підтримки 📝')
 
-    button3 = types.KeyboardButton('❓Як все працює❓')
-    button4 = types.KeyboardButton('👥 Про нас 👥')
+    button3 = types.KeyboardButton('Як все працює❓')
+    button4 = types.KeyboardButton('Про нас 👥')
     button5 = types.KeyboardButton("Відправити ціну")
     # Разделяю кнопки по строкам так, чтобы товары были отдельно от остальных кнопок
     markup.row(button1)
@@ -53,7 +53,7 @@ def welcome(message):
     markup.row(button3, button4)
     markup.row(button6)
     if user_id == 788388571 or user_id==5792353056 or user_id==5792353056:
-        button7 = types.KeyboardButton("Адмін панель")
+        button7 = types.KeyboardButton("Адмін панель 👀")
         markup.row(button7)
 
     if message.text == '/start':
@@ -62,7 +62,7 @@ def welcome(message):
         # bot.send_message(message.chat_id, text=bold_text, parse_mode=telegram.ParseMode.MARKDOWN)
         # Отправляю приветственный текст
         bot.send_message(message.chat.id,
-                         f'Привіт 👋, *{message.from_user.first_name}*!\nЛаскаво просимо до нашого інноваційного телеграм-бота "SndSkup"! Тут тобі вдасться продати свій товар всього за декілька кліків.',reply_markup=markup,
+                         f'Привіт 👋, *{message.from_user.first_name}*!\nЛаскаво просимо до нашого інноваційного телеграм-бота "SndSkup"!\nТут тобі вдасться продати твій одяг всього лише в декілька кліків 😉.',reply_markup=markup,
                          parse_mode='Markdown')
     else:
         bot.send_message(message.chat.id, 'Закинув тебе в головне меню,вибирай!', reply_markup=markup)
@@ -71,13 +71,13 @@ def welcome(message):
 # Обработка обычных текстовых команд, описанных в кнопках
 @bot.message_handler()
 def info(message):
-    if message.text == '👕➡️💵 Продати':
+    if message.text == 'Продати 💸':
         goodsChapter(message)
-    elif message.text == '❓Як все працює❓':
+    elif message.text == 'Як все працює❓':
         settingsChapter(message)
-    elif message.text == '🧳 Мої замовлення 🧳':
+    elif message.text == 'Мої замовлення 🧳':
         my_items(message)
-    elif message.text == '👥 Про нас 👥':
+    elif message.text == 'Про нас 👥':
         infoChapter(message)
     elif message.text == 'Орест лох':
         OrestLoh(message)
@@ -99,7 +99,7 @@ def info(message):
         handle_buying_items(message)
     elif message.text == "✅ Я відправив усі фото":
          check_and_update_status(message)
-    elif message.text=="Адмін панель":
+    elif message.text=="Адмін панель 👀":
         adminPanel(message)
     elif message.text == 'Скачать базу':
         extract_and_send_data(message)
@@ -224,7 +224,7 @@ def info(message):
 
 
 
-    elif message.text == '✏️ Звернутися до підтримки ✏️':
+    elif message.text == 'Звернутися до підтримки 📝':
         if message.from_user.id == 788388571 or message.from_user.id == 5792353056 or message.from_user.id == 5792353056:
             # Сюда можете ввести свою ссылку на Телеграмм, тогда пользователя будет перекидывать к вам в личку
             # webbrowser.open('https://t.me/sndskup')
@@ -234,7 +234,9 @@ def info(message):
                              disable_web_page_preview=True)
             bot.send_message(chat_id=message.chat.id, text=profile_link)
         else:
-            bot.reply_to(message, 'Бот запрацює завтра')
+            bot.reply_to(message,
+                         '‼️Друже,\nSndSkup *розпочне свою роботу* завтра (09.10) о 9:00.\n\nПостав нагадування, щоб не забути 😏.',
+                         parse_mode="Markdown")
 
     elif message.text == '↩️ Назад':
         goodsChapter(message)
@@ -349,7 +351,8 @@ def extract_and_send_data(message):
         # Поділ тексту на частини (максимальний розмір повідомлення Telegram - 4096 символів)
         max_message_length = 4096
         chunks = [data_text[i:i + max_message_length] for i in range(0, len(data_text), max_message_length)]
-
+    else:
+        bot.send_message(message.chat.id,"Я не знаю такої команди")
         # Відправлення кожної частини тексту
         # for chunk in chunks:
         #     bot.send_message(message.chat.id, text=chunk)
@@ -477,7 +480,7 @@ def goodsChapter(message):
         markup.row(button4)
         bot.send_message(message.chat.id, 'Ти перейшов у розділ "Продати річ" ', reply_markup=markup)
     else:
-        bot.reply_to(message, 'Бот запрацює завтра')
+        bot.reply_to(message, '‼️Друже,\nSndSkup *розпочне свою роботу* завтра (09.10) о 9:00.\n\nПостав нагадування, щоб не забути 😏.',parse_mode="Markdown")
 
 
 
@@ -506,7 +509,7 @@ def settingsChapter(message):
                          '📦 Після відправлення товару, надай номер накладної, номер карти (у випадку, якщо ти обрав доставку через систему) натиснувши:  “Мої замовлення” ➡️ “Відправити номер карти” “Відправити номер накладної”.\n\n'
                          '💰Ми оперативно перерахуємо кошти на твою карту після отримання товару.')
     else:
-        bot.reply_to(message, 'Бот запрацює завтра')
+        bot.reply_to(message, '‼️Друже,\nSndSkup *розпочне свою роботу* завтра (09.10) о 9:00.\n\nПостав нагадування, щоб не забути 😏.',parse_mode="Markdown")
 
 
 # Функція для перевірки, чи користувач відправив фотографії до бази даних за останні 30 секунд
@@ -741,7 +744,7 @@ def infoChapter(message):
         Ми пишаємося нашою командою експертів, яка зосереджена на вашому задоволенні та впевнена, що забезпечить вам зручний та вигідний досвід продажу. Приєднуйтесь до нашої спільноти і давайте разом знайдемо нове призначення для вашого непотрібного одягу! 💼''',
                          parse_mode='Markdown')
     else:
-        bot.reply_to(message, 'Бот запрацює завтра')
+        bot.reply_to(message, '‼️Друже,\nSndSkup *розпочне свою роботу* завтра (09.10) о 9:00.\n\nПостав нагадування, щоб не забути 😏.',parse_mode="Markdown")
 
 
 
@@ -1045,7 +1048,7 @@ def my_items(message):
                          f"*У тебе ще немає жодного замовлення.* \n\n*Щоб створити замовлення* натисни:      \n”Продати” ➡️ “Відправити фото”.",
                          parse_mode="Markdown")
     else:
-        bot.reply_to(message, 'Бот запрацює завтра')
+        bot.reply_to(message, '‼️Друже,\nSndSkup *розпочне свою роботу* завтра (09.10) о 9:00.\n\nПостав нагадування, щоб не забути 😏.',parse_mode="Markdown")
 
 
 
