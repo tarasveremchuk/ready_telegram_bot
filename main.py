@@ -472,6 +472,7 @@ def adminPanel(message):
 
 
 def goodsChapter(message):
+    if message.from_user.id == 788388571 or message.from_user.id == 5792353056 or message.from_user.id == 5792353056:
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
         button1 = types.KeyboardButton('☑️ Речі які ми купуємо ☑️')
         button2 = types.KeyboardButton('📷 Відправити фото 📸')
@@ -482,6 +483,11 @@ def goodsChapter(message):
         markup.row(button3)
         markup.row(button4)
         bot.send_message(message.chat.id, 'Ти перейшов у розділ "Продати річ" ', reply_markup=markup)
+    else:
+        bot.reply_to(message, '''‼️SndSkup на технічній перерві‼️
+
+PS: Ви накидали стільки оголошень, що телеграм не витримав 🥲''')
+
 
 
 last_messages = []
@@ -811,6 +817,7 @@ def OtsinkaTovaru(message):
 
 @bot.message_handler(func=lambda message: message.text.startswith('Мої речі'))
 def my_items(message):
+    if message.from_user.id == 788388571 or message.from_user.id == 5792353056 or message.from_user.id == 5792353056:
         conn = sqlite3.connect('photos.db')
         cursor = conn.cursor()
 
@@ -1041,6 +1048,12 @@ def my_items(message):
             bot.reply_to(message,
                          f"*У тебе ще немає жодного замовлення.* \n\n*Щоб створити замовлення* натисни:      \n”Продати” ➡️ “Відправити фото”.",
                          parse_mode="Markdown")
+    else:
+        bot.reply_to(message, '''‼️SndSkup на технічній перерві‼️
+
+PS: Ви накидали стільки оголошень, що телеграм не витримав 🥲''')
+
+
 
 
 
