@@ -103,6 +103,8 @@ def info(message):
         adminPanel(message)
     elif message.text == 'Скачать базу':
         extract_and_send_data(message)
+    elif message.text=="Заповнити базу":
+        add_photo_data_manually()
     elif message.text == '❓Як ми оцінюємо товар❓':
         OtsinkaTovaru(message)
 
@@ -313,6 +315,7 @@ def handle_text(message):
 
 
 
+
 def extract_and_send_data(message):
     if message.from_user.id == 788388571 or message.from_user.id == 5792353056 or message.from_user.id ==5792353056:
         # З'єднання з базою даних
@@ -393,10 +396,10 @@ def check_and_update_status(message):
             hide_markup = types.ReplyKeyboardRemove()
             # bot.send_message(message.chat.id, f'* Середній час очікування: {est_time} хвилин *',parse_mode='Markdown')
 
-            bot.send_message(message.chat.id,'''*‼️Придумай назву для замовлення.*
+            bot.send_message(message.chat.id,'''*Придумай назву для замовлення.*
 
 Наприклад:
-Футболка червона Nike vintage L.''', parse_mode='Markdown', reply_markup=hide_markup )
+Футболка червона Nike vintage L.\n\n‼️Без назви замовлення *оголошення не буде відправлено* на розгляд‼️''', parse_mode='Markdown', reply_markup=hide_markup )
             bot.register_next_step_handler(message, process_name_order,order_number)
 
         else:
@@ -717,14 +720,14 @@ def sentPhotoChapter(message):
 
 3️⃣ Надішли фото *нижніх бирок* (якщо такі присутні).
 
-4️⃣ Надішли фото *недоліків.*
-
-5️⃣ Після того *як завантажив необхідні фото*, натисни “✅ Я відправив усі фото”.''', parse_mode='Markdown')
+4️⃣ Надішли фото *недоліків.*''', parse_mode='Markdown')
 
     text = "*‼️Відправляйте лише правдиві фото та всі недоліки‼️*\nНе гайте ні нашого, ні вашого часу. Кожна річ буде ретельно перевірена на пошті."
+    text2 = "Після того як *завантажив необхідні фото, натисни* “✅ Я відправив усі фото”."
 
 
     bot.send_message(message.chat.id, text,reply_markup=markup,parse_mode='Markdown')
+    bot.send_message(message.chat.id, text2,reply_markup=markup,parse_mode='Markdown')
 
 
 
@@ -1069,6 +1072,7 @@ def handle_ttn_number(call):
         bot.register_next_step_handler(call.message, save_ttn_number, order_number)
     else:
         bot.send_message(call.message.chat.id, 'Ви уже відправляли номер ТТН!')
+
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('ttn1_'))
@@ -1823,6 +1827,7 @@ def get_ttn_status(order_number):
         return result[0]
     else:
         return None
+
 def get_ttn_and_card_status(order_number):
     conn = sqlite3.connect('photos.db')
     cursor = conn.cursor()
