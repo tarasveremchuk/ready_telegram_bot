@@ -182,6 +182,7 @@ def info(message):
                 # Отримання ідентифікатора користувача
                 user_id = message.from_user.id
 
+
                 # Отримання фотографії з повідомлення
                 photo = message.photo[-1]
 
